@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentespedfiscal/contracts/llm-analise/1.0.0",
+  "title": "Resposta estruturada do LLM — análise de validação EFD",
+  "description": "Conteúdo produzido pelo modelo. NÃO contém identificadores de execução, status, consumo, tempos ou achados determinísticos (constitution P-12, research R-10). Compatível com saída estruturada estrita: todos os campos obrigatórios, sem additionalProperties.",
+  "type": "object",
+  "required": ["versaoContrato", "resumo", "explicacoes", "indicios", "limitacoes", "revisaoHumanaRecomendada"],
+  "additionalProperties": false,
+  "properties": {
+    "versaoContrato": { "const": "1.0.0" },
+    "resumo": { "type": "string", "description": "Síntese em português para o analista." },
+    "explicacoes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["achadoId", "texto", "causaProvavel", "acaoCorretiva", "trechoIds"],
+        "additionalProperties": false,
+        "properties": {
+          "achadoId": { "type": "string", "description": "Deve existir entre os achados determinísticos da execução." },
+          "texto": { "type": "string" },
+          "causaProvavel": { "type": "string" },
+          "acaoCorretiva": { "type": "string" },
+          "trechoIds": { "type": "array", "items": { "type": "string" }, "description": "Somente trechos recuperados nesta execução." }
+        }
+      }
+    },
+    "indicios": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["descricao", "severidade", "registro", "trechoIds"],
+        "additionalProperties": false,
+        "properties": {
+          "descricao": { "type": "string" },
+          "severidade": { "enum": ["advertencia", "informativa"] },
+          "registro": { "type": ["string", "null"] },
+          "trechoIds": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "limitacoes": { "type": "array", "items": { "type": "string" } },
+    "revisaoHumanaRecomendada": { "type": "boolean" }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentespedfiscal/contracts/catalogo-regras/1.0.0",
+  "title": "Catálogo de Regras EFD ICMS/IPI",
+  "type": "object",
+  "description": "A fonte de toda regra ativa deve corresponder a um item de fontesOficiais (verificação no build). Material interno nunca é listado em fontesOficiais.",
+  "required": ["versaoCatalogo", "fontesOficiais", "regras"],
+  "additionalProperties": false,
+  "properties": {
+    "versaoCatalogo": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "fontesOficiais": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["documento", "versao"],
+        "additionalProperties": false,
+        "properties": {
+          "documento": { "type": "string", "minLength": 1 },
+          "versao": { "type": "string", "minLength": 1 },
+          "ato": { "type": "string" }
+        }
+      }
+    },
+    "regras": { "type": "array", "items": { "$ref": "#/$defs/regra" } }
+  },
+  "$defs": {
+    "fonte": {
+      "type": "object",
+      "required": ["documento", "versao", "localizacao"],
+      "additionalProperties": false,
+      "properties": {
+        "documento": { "type": "string", "minLength": 1 },
+        "versao": { "type": "string", "minLength": 1 },
+        "localizacao": { "type": "string", "minLength": 1 },
+        "documentoId": { "type": "string", "format": "uuid" }
+      }
+    },
+    "regra": {
+      "type": "object",
+      "required": ["id", "descricao", "tipo", "severidade", "status", "aplicacao", "acaoCorretiva"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^EFD-(ESTR|NEG)-\\d{3}$" },
+        "descricao": { "type": "string" },
+        "tipo": { "enum": ["estrutural", "negocio"] },
+        "severidade": { "enum": ["impeditiva", "advertencia", "informativa"] },
+        "status": { "enum": ["ativa", "pendente_confirmacao", "revogada"] },
+        "aplicacao": {
+          "type": "object",
+          "required": ["codVer", "periodoInicio"],
+          "additionalProperties": false,
+          "properties": {
+            "codVer": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+            "periodoInicio": { "type": "string", "pattern": "^\\d{4}-\\d{2}$" },
+            "periodoFim": { "type": "string", "pattern": "^\\d{4}-\\d{2}$" },
+            "perfis": { "type": "array", "items": { "enum": ["A", "B", "C"] } },
+            "ufs": { "type": "array", "items": { "type": "string", "pattern": "^[A-Z]{2}$" } }
+          }
+        },
+        "fonte": { "$ref": "#/$defs/fonte" },
+        "origemCandidata": { "type": "string" },
+        "dependeDe": { "type": "array", "items": { "type": "string" } },
+        "acaoCorretiva": { "type": "string" }
+      },
+      "if": { "properties": { "status": { "const": "ativa" } } },
+      "then": { "required": ["fonte"] }
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "AgenteSpedFiscal",
+  "description": "Pré-validação de arquivos EFD ICMS/IPI (SPED Fiscal) e consulta fundamentada no Guia Prático oficial. Não assina, não transmite e não substitui o PVA.",
+  "url": "http://localhost:8080/a2a",
+  "version": "1.0.0",
+  "defaultInputModes": ["text/plain", "application/json"],
+  "defaultOutputModes": ["application/json"],
+  "capabilities": { "streaming": false, "pushNotifications": false },
+  "securitySchemes": { "bearer": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" } },
+  "security": [{ "bearer": [] }],
+  "skills": [
+    {
+      "id": "validar-efd-icms-ipi",
+      "name": "Validar EFD ICMS/IPI",
+      "description": "Recebe um arquivo EFD ICMS/IPI (.txt, períodos a partir de 01/2026) e retorna o envelope de validação (envelope-validacao.schema.json). Execução assíncrona: a tarefa conclui quando o envelope atinge status final.",
+      "tags": ["sped", "efd", "icms", "ipi", "validacao"],
+      "inputModes": ["text/plain"],
+      "outputModes": ["application/json"]
+    },
+    {
+      "id": "consultar-efd-icms-ipi",
+      "name": "Consultar orientações da EFD ICMS/IPI",
+      "description": "Responde perguntas sobre a EFD ICMS/IPI com referências à base de informação, indicando se cada fonte é oficial ou material interno da Infis, ou declara a ausência de evidências.",
+      "tags": ["sped", "efd", "consulta", "rag"],
+      "inputModes": ["text/plain"],
+      "outputModes": ["application/json"]
+    }
+  ]
+}
