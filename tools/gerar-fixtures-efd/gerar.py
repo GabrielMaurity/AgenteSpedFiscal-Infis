@@ -69,12 +69,11 @@ def arquivo_valido():
 
 
 def fechar(corpo):
-    """Calcula os totalizadores: encerramentos de bloco, bloco 9 e registro 9999."""
+    """Calcula os totalizadores. O 0000 soma no bloco 0 e o 9999 soma no bloco 9 (Guia, registros 0990 e 9990)."""
     corpo = [list(c) for c in corpo if c[0] not in ("9001", "9900", "9990", "9999")]
     por_bloco = {}
     for campos in corpo:
-        if campos[0] != "0000":
-            por_bloco[campos[0][0]] = por_bloco.get(campos[0][0], 0) + 1
+        por_bloco[campos[0][0]] = por_bloco.get(campos[0][0], 0) + 1
     for campos in corpo:
         if campos[0].endswith("990"):
             campos[1] = str(por_bloco[campos[0][0]])
@@ -86,8 +85,8 @@ def fechar(corpo):
     contagem["9900"] = len(contagem) + 1
 
     linhas9 = [["9900", r, str(q)] for r, q in contagem.items()]
-    bloco9 = 1 + len(linhas9) + 1
-    return (corpo + [["9001", "0"]] + linhas9 + [["9990", str(bloco9)], ["9999", str(len(corpo) + bloco9 + 1)]])
+    bloco9 = 1 + len(linhas9) + 1 + 1
+    return (corpo + [["9001", "0"]] + linhas9 + [["9990", str(bloco9)], ["9999", str(len(corpo) + bloco9)]])
 
 
 def texto(corpo):
