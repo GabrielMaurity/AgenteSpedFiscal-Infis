@@ -29,12 +29,21 @@ Esperado: containers `api-agente` (porta 8080), `api-rag` (8081), `postgres`, `m
 
 ## 2. Gerar tokens de desenvolvimento
 
+As duas APIs usam a mesma chave no compose (`JWT_SIGNING_KEY_BASE64`). Antes do passo 1, copie para o
+`.env` a chave exibida por:
+
 ```bash
-dotnet user-jwts create --project src/Api.Agente/Api.Agente.Endpoints --claim org_id=org-teste --role analista --role admin_base
+dotnet user-jwts key --project src/Api.Agente/Api.Agente.Endpoints
+```
+
+Depois, gere um token por API, a partir do mesmo projeto, para que usem a mesma chave:
+
+```bash
+dotnet user-jwts create --project src/Api.Agente/Api.Agente.Endpoints --audience api-agente --claim org_id=org-teste --role analista --role admin_base
 ```
 
 ```bash
-dotnet user-jwts create --project src/Api.Rag/Api.Rag.Endpoints --claim org_id=org-teste --role admin_base
+dotnet user-jwts create --project src/Api.Agente/Api.Agente.Endpoints --audience api-rag --claim org_id=org-teste --role admin_base
 ```
 
 ## 3. Ingerir o Guia Prático (história 4)
@@ -57,13 +66,14 @@ Esperado: `202` com `execucaoId`. Consultar `GET /api/v1/validacoes/{execucaoId}
 
 | Caso de referência | Resultado esperado |
 |---|---|
-| `valido-perfil-a.txt` | `concluida`, sem achados impeditivos, `avisoPva` presente, nenhuma afirmação de conformidade |
+| `valido-perfil-a.txt` | `concluida_com_limitacoes` até a US3 (depois, `concluida`), sem achados impeditivos, `avisoPva` presente, nenhuma afirmação de conformidade |
 | `sem-k990.txt` | achado `erro_estrutural`, severidade `impeditiva`, registro `K990` |
 | `c170-orfao.txt` | achado na linha do `C170` sem `C100` |
 | `ind-mov-incoerente.txt` | achado de `IND_MOV` = `1` com registros de dados |
 | `9900-divergente.txt` | achados com quantidade declarada × encontrada |
 | `unidade-sem-0190.txt` | `inconsistencia_negocio` com a unidade e as linhas |
 | `periodo-2025.txt` | `falha` na etapa 3, motivo "período não suportado" |
+| `periodo-2027.txt` | `falha` na etapa 3: o leiaute 021 ainda não é aceito |
 | `injecao-prompt.txt` | mesmos achados do arquivo sem o texto malicioso |
 
 Validar também: o arquivo enviado não existe mais no volume temporário após a conclusão
@@ -107,11 +117,17 @@ Outros casos:
 ## 7. Testes automatizados
 
 ```bash
-dotnet test AgenteSpedFiscal.slnx --filter "Category!=Eval"
+dotnet test --solution AgenteSpedFiscal.slnx --filter-not-trait "Category=Docker"
 ```
 
-Esperado: suíte determinística verde, sem chamadas reais à OpenAI (Testcontainers para PostgreSQL
-e MongoDB).
+Esperado: suíte determinística verde, sem Docker e sem chamadas reais à OpenAI.
+
+```bash
+dotnet test --solution AgenteSpedFiscal.slnx --filter-trait "Category=Docker"
+```
+
+Esperado: testes com PostgreSQL/pgvector e MongoDB reais (Testcontainers) verdes. Projetos sem esses
+testes informam "Zero testes" e código de saída 8, o que é esperado.
 
 ```bash
 dotnet run --project tests/AgenteSpedFiscal.Evals -- --conjunto evals/rag-guia-3.2.4

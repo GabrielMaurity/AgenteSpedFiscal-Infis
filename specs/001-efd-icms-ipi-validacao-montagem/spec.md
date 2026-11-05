@@ -27,7 +27,7 @@ deixou para a especificação."
 | Fonte | Versão / data | Situação |
 |---|---|---|
 | Guia Prático da EFD-ICMS/IPI (conforme Ato COTEPE/ICMS nº 44/2018 e alterações), 366 páginas | 3.2.4, atualização de 30/07/2026 | Recebida; fonte do Catálogo de Regras e primeiro documento da base de conhecimento |
-| Nota Técnica / Manual de Orientação do leiaute (Ato COTEPE/ICMS nº 44/2018), incluindo a Tabela Versão do Leiaute (item 3.1.1) | Versão vigente para 2026 — a obter | **Pendente**; necessária para FR-003 e FR-004 |
+| Nota Técnica EFD ICMS IPI 2026.001 / Manual de Orientação do Leiaute (Ato COTEPE/ICMS nº 44/2018), incluindo a Tabela Versão do Leiaute (item 3.1.1) | v1.0, maio de 2026; institui o leiaute 021, válido a partir de 01/01/2027 | Recebida; fonte de `COD_VER` × período, formato do arquivo e leiaute 021 |
 | Tabelas utilizadas pelo PVA (Guia 3.2.4, Cap. IV, Seção 1), incluindo NCM | Conforme vigência | **Pendente**; importadas como tabelas de referência (FR-063) |
 
 ## Clarifications
@@ -35,8 +35,8 @@ deixou para a especificação."
 ### Session 2026-10-29
 
 - Q: Para quais versões do leiaute e períodos de apuração a primeira entrega deve validar
-  arquivos EFD ICMS/IPI? → A: Somente a versão do leiaute vigente para períodos de apuração a
-  partir de 01/2026; arquivos de períodos anteriores são recusados.
+  arquivos EFD ICMS/IPI? → A: Somente o leiaute `020`, para períodos de 2026; arquivos de outros
+  períodos, inclusive 2027 (leiaute `021`), são recusados nesta entrega.
 - Divergência corrigida: a verificação de lacunas de numeração (FR-024) aplica-se somente a
   documentos de emissão própria, pois a numeração de documentos de terceiros não é controlada
   pelo declarante.
@@ -255,21 +255,27 @@ não gera duplicidade.
   identificar, para cada envio, o usuário, a organização, o contexto e um identificador único de
   execução.
 - **FR-002**: O sistema DEVE aceitar arquivos de até 500 MB (limite configurável) e DEVE recusar,
-  antes de qualquer análise, arquivos acima do limite configurado, com extensão ou conteúdo não textual, ou com codificação diferente da
-  exigida pelo leiaute oficial catalogado, informando o motivo.
+  antes de qualquer análise, arquivos acima do limite configurado, com extensão ou conteúdo não
+  textual, ou com codificação diferente de ISO 8859-1 (Latin-1), exigida pela NT 2026.001, item
+  2.1.1, informando o motivo.
 - **FR-003**: O sistema DEVE identificar, a partir do registro `0000`, o tipo de documento, a
   versão do leiaute, o período, a finalidade, a UF, o estabelecimento e o perfil de apresentação,
-  e DEVE selecionar as regras e os manuais aplicáveis a essa versão e período.
-- **FR-004**: O sistema DEVE suportar somente a versão do leiaute vigente para períodos de
-  apuração a partir de 01/2026, conforme o Guia Prático oficial catalogado, e DEVE recusar
-  arquivos de períodos anteriores ou de outras versões com mensagem que informe a versão e os
-  períodos suportados. Versões adicionais PODEM ser incluídas depois por inclusão no Catálogo de
-  Regras.
+  e DEVE selecionar as regras e os manuais aplicáveis. A versão (`COD_VER`) DEVE ser válida na
+  data do campo `DT_FIN`, conforme a Tabela Versão do Leiaute (NT 2026.001, item 3.1.1) e o Guia
+  Prático 3.2.4 (campo 02 do registro `0000`).
+- **FR-004**: O sistema DEVE suportar somente o leiaute `020` (versão 119), obrigatório a partir de
+  01/01/2026 (NT 2026.001, item 3.1.1), para arquivos com `DT_FIN` de 01/01/2026 a 31/12/2026, e DEVE
+  recusar arquivos de outros períodos ou versões com mensagem que informe a versão e os períodos
+  suportados. Versões adicionais PODEM ser incluídas depois por novos dados de leiaute e de catálogo;
+  o leiaute `021`, de 2027, será a próxima.
 
 **Validação estrutural (história 1)**
 
-- **FR-010**: O sistema DEVE validar, em cada linha, a delimitação por `|`, o tipo de registro e a
-  quantidade, o formato e a obrigatoriedade dos campos conforme o leiaute da versão identificada.
+- **FR-010**: O sistema DEVE validar, em cada linha, a delimitação por `|`, o término em CR e LF,
+  o tipo de registro e a quantidade, o formato e a obrigatoriedade dos campos conforme o leiaute
+  da versão identificada. A partir do leiaute 020, os campos de CNPJ e de chave de documento
+  eletrônico relacionados na NT 2026.001, Anexo I, são alfanuméricos (`C`) e NÃO DEVEM ser
+  validados como numéricos.
 - **FR-011**: O sistema DEVE validar a ordem dos blocos e a presença do registro de abertura e de
   encerramento de cada bloco exigido pelo leiaute, inclusive blocos sem movimento.
 - **FR-012**: O sistema DEVE validar a hierarquia pai-filho: nenhum registro filho pode existir sem
@@ -448,11 +454,9 @@ não gera duplicidade.
   há também o papel de administrador da base de conhecimento.
 - A primeira entrega trata apenas da **validação e consulta da EFD ICMS/IPI**; geração de
   arquivos SPED, EFD-Contribuições, ECD, ECF e demais escriturações estão fora do escopo.
-- O documento-base do usuário é fonte secundária. O Guia Prático 3.2.4 já foi obtido; a Nota
-  Técnica do Ato COTEPE/ICMS nº 44/2018 (com a Tabela Versão do Leiaute) e as tabelas do PVA
-  (incluindo NCM) serão obtidas e catalogadas antes da implementação das regras que delas
-  dependem. Sem a Tabela Versão do Leiaute, a identificação de versão (FR-003, FR-004) não pode
-  ser implementada.
+- O documento-base do usuário é fonte secundária. O Guia Prático 3.2.4 e a NT 2026.001 v1.0 já
+  foram obtidos; as tabelas do PVA (incluindo NCM) serão obtidas e catalogadas antes da
+  implementação das regras que delas dependem.
 - O Guia Prático apresenta as tabelas de campos dos registros em formato tabular no PDF; a
   ingestão na base de conhecimento precisa preservar essas tabelas e a página de origem para que
   as citações sejam corretas.
@@ -475,9 +479,9 @@ não gera duplicidade.
 
 | ID | Decisão | Resolução nesta especificação |
 |---|---|---|
-| D-03 | Fontes oficiais, tipos de SPED e versões suportadas | Tipo: EFD ICMS/IPI. Fontes: Guia Prático 3.2.4 (recebido), Nota Técnica do Ato COTEPE/ICMS nº 44/2018 e tabelas do PVA (pendentes) — ver "Fontes oficiais identificadas" (FR-030). Versões/períodos: leiaute vigente, períodos a partir de 01/2026 (FR-004). |
+| D-03 | Fontes oficiais, tipos de SPED e versões suportadas | Tipo: EFD ICMS/IPI. Fontes: Guia Prático 3.2.4 e NT 2026.001 v1.0 (recebidos), tabelas do PVA (pendentes) — ver "Fontes oficiais identificadas" (FR-030). Versões/períodos: leiaute `020`, períodos de 2026 (FR-004). |
 | D-04 | Escopo da produção de SPED | Fora do escopo: o agente valida o SPED Fiscal e mantém a base de informação; não gera arquivos. |
-| D-05 | Limites, formatos e codificações | Formato `.txt` delimitado por pipe (\|); codificação conforme Guia oficial; limite configurável de 500 MB (FR-002, SC-005). |
+| D-05 | Limites, formatos e codificações | Formato `.txt` delimitado por pipe (\|); codificação ISO 8859-1 (NT 2026.001, item 2.1.1); limite configurável de 500 MB (FR-002, SC-005). |
 | D-08 | Retenção de arquivos, memória, logs e consumo | Arquivo descartado após o processamento; hash, metadados e resultado por 90 dias, com exclusão sob demanda (FR-082). Memória, logs e consumo: plano técnico. |
 | D-09 | Catálogo de ferramentas externas | Consulta à base de conhecimento oficial e às tabelas de referência importadas (FR-063); nenhuma consulta externa em tempo de validação; nenhuma ferramenta com efeito colateral externo; sem assinatura ou transmissão (FR-073). |
 | D-10 | Severidades e revisão humana | Impeditiva / Advertência / Informativa (FR-042); critérios de revisão humana em FR-046. |

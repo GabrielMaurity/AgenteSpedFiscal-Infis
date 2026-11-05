@@ -55,10 +55,9 @@ funciona sem IA e sem RAG (FR-084); LLM recebe resumo de achados, nunca o arquiv
 validação estrutural, regras de negócio das seções 3 e 6 do documento-base após confirmação no
 Guia; múltiplas organizações isoladas por `org_id`.
 
-**Bloqueio externo conhecido**: a Tabela Versão do Leiaute (item 3.1.1 da Nota Técnica do Ato
-COTEPE/ICMS nº 44/2018) ainda não foi recebida; as tarefas de FR-003/FR-004 (seleção de leiaute
-por `COD_VER` e período) e de codificação (R-07) ficam bloqueadas até lá. Não há itens
-NEEDS CLARIFICATION técnicos em aberto.
+**Fontes oficiais recebidas**: Guia Prático 3.2.4 e NT 2026.001 v1.0, que traz a Tabela Versão do
+Leiaute (item 3.1.1) e define a codificação ISO 8859-1 (item 2.1.1). Não há bloqueio externo nem
+itens NEEDS CLARIFICATION técnicos em aberto.
 
 ## Constitution Check
 
@@ -129,10 +128,14 @@ specs/001-efd-icms-ipi-validacao-montagem/
 
 ```text
 AgenteSpedFiscal.slnx
+global.json                        # SDK .NET 10 e Microsoft.Testing.Platform
+dotnet-tools.json                  # dotnet-ef
 Directory.Build.props              # Nullable, analisadores, TreatWarningsAsErrors
 Directory.Packages.props           # versões centralizadas
 docker-compose.yml
 .env.example
+data/
+└── precos-modelos.json           # tabela de preços versionada (research R-21)
 docker/
 └── postgres/init/                 # cria bancos agente e rag, usuários, extensão vector no rag
 docs/
@@ -163,6 +166,9 @@ tests/
 └── fixtures/
     ├── efd/                       # arquivos sintéticos + gabaritos de achados
     └── base/                      # material interno de teste (classificação interno)
+tools/
+├── extrair-leiaute/               # gera o leiaute 020 a partir do Guia Prático
+└── gerar-fixtures-efd/            # gera os arquivos EFD sintéticos e gabaritos
 evals/                             # conjuntos de avaliação versionados e resultados
 ```
 

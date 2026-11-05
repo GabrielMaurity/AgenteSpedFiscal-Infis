@@ -220,8 +220,7 @@ Já resolvidas: D-01 (MongoDB), D-03 (EFD ICMS/IPI, leiaute vigente a partir de 
 (geração fora do escopo), D-05 (`.txt` até 500 MB), D-10 (severidades) e D-14 (descarte do
 arquivo).
 
-Dependência externa: a Nota Técnica do Ato COTEPE/ICMS nº 44/2018, com a Tabela Versão do Leiaute,
-ainda precisa ser obtida.
+Fontes oficiais recebidas: Guia Prático 3.2.4 e NT 2026.001 v1.0 (Tabela Versão do Leiaute).
 
 ## Contribuição
 

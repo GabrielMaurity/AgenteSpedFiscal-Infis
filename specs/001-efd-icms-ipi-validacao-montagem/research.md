@@ -69,10 +69,9 @@ Itens marcados com **ADR** DEVEM ser registrados em `docs/adr/` antes da tarefa 
   (P-01); novas versões de leiaute não exigem código novo.
 - **Alternativas**: codificar cada registro em classes (milhares de linhas, difícil de revisar
   contra o Guia); validação por XSD (proibida para TXT, P-02).
-- **Dependência**: a correspondência `COD_VER` × período depende da Tabela Versão do Leiaute (item
-  3.1.1 da Nota Técnica do Ato COTEPE/ICMS nº 44/2018), ainda não recebida. Até lá, as tarefas de
-  FR-003/FR-004 ficam bloqueadas; o restante do motor pode ser construído e testado com o leiaute
-  extraído do Guia.
+- **Seleção da versão**: a Tabela Versão do Leiaute (NT 2026.001 v1.0, item 3.1.1) fica em dados
+  versionados, com fonte. O `COD_VER` é validado contra o `DT_FIN` do `0000` (Guia 3.2.4). Os
+  campos 020 vêm do Guia 3.2.4; o Anexo I da NT lista o que muda de 020 para 021.
 
 ## R-06 — Catálogo de Regras
 
@@ -87,14 +86,13 @@ Itens marcados com **ADR** DEVEM ser registrados em `docs/adr/` antes da tarefa 
 
 ## R-07 — Codificação do arquivo
 
-- **Decisão**: a codificação aceita é parâmetro de configuração por versão de leiaute, preenchido
-  a partir da Nota Técnica. O Guia 3.2.4 (Cap. II, Seção 3) define o conjunto de caracteres
+- **Decisão**: a codificação aceita é ISO 8859-1 (Latin-1), exigida pela NT 2026.001, item 2.1.1, e
+  fica nos dados de cada versão de leiaute. Toda linha termina em CR e LF (item 2.1.1, alínea g). O Guia 3.2.4 (Cap. II, Seção 3) define o conjunto de caracteres
   válidos para campos `C` (Tabela ASCII, exceto `|` e caracteres 00–31) e para campos `N`
   (algarismos e vírgula decimal); essas regras são catalogadas. Bytes inválidos para a codificação
   configurada geram erro estrutural com a linha.
-- **Justificativa**: não inventar a codificação (P-01); o Guia não a nomeia explicitamente.
-- **Alternativas**: fixar ISO-8859-1 por convenção de mercado (suposição não documentada na fonte
-  recebida; rejeitada até a confirmação na Nota Técnica).
+- **Justificativa**: a fonte oficial define a codificação (P-01); o Guia não a nomeia.
+- **Alternativas**: aceitar também UTF-8 (fora da norma; o PVA é a referência).
 
 ## R-08 — Volume de achados
 
@@ -196,7 +194,8 @@ Itens marcados com **ADR** DEVEM ser registrados em `docs/adr/` antes da tarefa 
 - **Decisão**: SDK .NET do protocolo A2A (`A2A` / `A2A.AspNetCore`), com Agent Card publicado em
   `/.well-known/agent-card.json` e duas skills: `validar-efd-icms-ipi` e `consultar-efd-icms-ipi`
   ([a2a-agent-card.json](contracts/a2a-agent-card.json)). O handler A2A chama os mesmos casos de
-  uso da API REST e devolve o mesmo envelope (FR-081, P-20). **ADR-0006**.
+  uso da API REST e devolve o mesmo envelope (FR-081, P-20). **ADR-0006**. O SDK ainda não tem versão
+  estável (`1.0.0-preview4`), risco registrado no ADR.
 - **Justificativa**: exigido pela constitution; mesma camada de aplicação garante equivalência.
 - **Alternativas**: implementar o protocolo manualmente (risco de incompatibilidade).
 

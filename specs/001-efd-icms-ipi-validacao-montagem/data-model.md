@@ -26,8 +26,8 @@ arquivo (FR-082).
 | Campo | Tipo | Regra |
 |---|---|---|
 | codVer | string | versão do leiaute (campo `COD_VER` do `0000`) |
-| vigencia | {inicio, fim?} | períodos de apuração cobertos (Tabela Versão do Leiaute — pendente) |
-| codificacao | string | conforme Nota Técnica (R-07) |
+| vigencia | {inicio, fim?} | períodos de apuração cobertos (NT 2026.001, item 3.1.1), comparados com `DT_FIN` |
+| codificacao | string | `ISO-8859-1` (NT 2026.001, item 2.1.1; R-07) |
 | blocos[] | {codigo, ordem, abertura, encerramento, obrigatorio, vigenciaInicio?} | ordem do Guia, Cap. II, Seção 1 |
 | registros[] | DefinicaoRegistro | — |
 | fonte | Fonte | documento, versão e localização da definição |

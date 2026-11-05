@@ -72,6 +72,7 @@ paths:
       responses:
         "204": { description: Excluída }
         "404": { $ref: "#/components/responses/Problema" }
+        "409": { $ref: "#/components/responses/Problema", description: "Execução ainda em processamento" }
   /api/v1/validacoes/{execucaoId}/exportacao.csv:
     parameters:
       - { name: execucaoId, in: path, required: true, schema: { type: string, format: uuid } }
