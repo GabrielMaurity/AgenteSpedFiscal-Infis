@@ -1,8 +1,10 @@
+using Api.Agente.Application.TabelasReferencia;
 using Api.Agente.Application.Validacao;
 using Api.Agente.Domain.Efd;
 using Api.Agente.Infrastructure.Arquivos;
 using Api.Agente.Infrastructure.Configuracao;
 using Api.Agente.Infrastructure.Fila;
+using Api.Agente.Infrastructure.TabelasReferencia;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -21,6 +23,8 @@ public static class ValidacaoExtensions
         services.AddSingleton<IArmazenamentoTemporario>(p => p.GetRequiredService<ArmazenamentoTemporario>());
         services.AddSingleton<FilaExecucoes>();
         services.AddSingleton<IFilaExecucoes>(p => p.GetRequiredService<FilaExecucoes>());
+        services.AddSingleton<IRepositorioNcm, RepositorioNcm>();
+        services.AddSingleton<ImportarNcmHandler>();
         services.AddSingleton<ValidarArquivoHandler>();
         services.AddHostedService<ProcessadorExecucoes>();
         return services;

@@ -3,6 +3,7 @@ using Api.Agente.Domain.Achados;
 using Api.Agente.Domain.Efd.Catalogo;
 using Api.Agente.Domain.Efd.Leiaute;
 using Api.Agente.Domain.Efd.Leitura;
+using Api.Agente.Domain.Execucoes;
 
 namespace Api.Agente.Domain.Efd.Validacao;
 
@@ -16,12 +17,24 @@ public sealed class ContextoValidacao(
 
     private readonly Dictionary<string, long> _totais = [];
     private readonly List<Achado> _achados = [];
+    private readonly List<ValidacaoNaoRealizada> _naoRealizadas = [];
 
     public DefinicaoLeiaute Leiaute => leiaute;
 
     public IReadOnlyList<Achado> Achados => _achados;
 
     public IReadOnlyDictionary<string, long> Totais => _totais;
+
+    public IReadOnlyList<ValidacaoNaoRealizada> NaoRealizadas => _naoRealizadas;
+
+    /// <summary>Regra ativa que não pôde verificar o arquivo por falta de dado (FR-044).</summary>
+    public void RegistrarNaoRealizada(string regraId, Categoria categoria, string motivo)
+    {
+        if (regrasAtivas.ContainsKey(regraId) && _naoRealizadas.All(n => n.Referencia != regraId))
+        {
+            _naoRealizadas.Add(new ValidacaoNaoRealizada(regraId, categoria, motivo));
+        }
+    }
 
     public void Emitir(
         string regraId,

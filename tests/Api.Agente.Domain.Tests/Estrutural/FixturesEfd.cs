@@ -1,9 +1,12 @@
+using System.Text;
 using System.Text.Json;
 using Api.Agente.Domain.Achados;
 using Api.Agente.Domain.Efd;
+using Api.Agente.Domain.Efd.Catalogo;
 using Api.Agente.Domain.Efd.Identificacao;
 using Api.Agente.Domain.Efd.Leitura;
 using Api.Agente.Domain.Efd.Validacao;
+using Api.Agente.Domain.Efd.Validacao.Negocio;
 using Api.Agente.Domain.Execucoes;
 
 namespace Api.Agente.Domain.Tests.Estrutural;
@@ -37,14 +40,37 @@ public static class FixturesEfd
         return IdentificadorArquivo.Identificar(null);
     }
 
-    public static async Task<ResultadoValidacao> ValidarAsync(Stream arquivo, CancellationToken cancelamento, int limite = 1_000)
+    public static async Task<ResultadoValidacao> ValidarAsync(
+        Stream arquivo,
+        CancellationToken cancelamento,
+        int limite = 1_000,
+        ITabelaNcm? tabelaNcm = null,
+        CatalogoRegras? catalogo = null)
     {
         var identificacao = (await IdentificarAsync(arquivo, cancelamento)).Identificacao!;
-        return await MotorValidacao.ValidarAsync(arquivo, Dados.Leiautes[0], Dados.Catalogo, identificacao, limite, cancelamento);
+        return await MotorValidacao.ValidarAsync(arquivo, Dados.Leiautes[0], catalogo ?? Dados.Catalogo, identificacao, limite, cancelamento, tabelaNcm);
     }
 
-    public static Task<ResultadoValidacao> ValidarCasoAsync(string caso, CancellationToken cancelamento) =>
-        ValidarAsync(Abrir(caso), cancelamento);
+    public static Task<ResultadoValidacao> ValidarCasoAsync(
+        string caso,
+        CancellationToken cancelamento,
+        ITabelaNcm? tabelaNcm = null,
+        CatalogoRegras? catalogo = null) =>
+        ValidarAsync(Abrir(caso), cancelamento, tabelaNcm: tabelaNcm, catalogo: catalogo);
+
+    public static async Task<string> LerTextoAsync(string caso, CancellationToken cancelamento) =>
+        Encoding.Latin1.GetString(await File.ReadAllBytesAsync(Caminho($"{caso}.txt"), cancelamento));
+
+    public static MemoryStream ComoArquivo(string texto) => new(Encoding.Latin1.GetBytes(texto));
+
+    public static string Trocar(string texto, string de, string para)
+    {
+        Assert.Contains(de, texto, StringComparison.Ordinal);
+        return texto.Replace(de, para, StringComparison.Ordinal);
+    }
+
+    public static string Descrever(IEnumerable<Achado> achados) =>
+        string.Join("\n", achados.Select(a => $"{a.RegraId} L{a.Linha} {a.Registro}/{a.Campo}: {a.Mensagem}"));
 
     public static bool Corresponde(Achado achado, AchadoEsperado esperado) =>
         achado.RegraId == esperado.RegraId

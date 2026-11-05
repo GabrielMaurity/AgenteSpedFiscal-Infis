@@ -3,6 +3,7 @@ using Api.Agente.Domain.Efd.Catalogo;
 using Api.Agente.Domain.Efd.Leiaute;
 using Api.Agente.Domain.Efd.Leitura;
 using Api.Agente.Domain.Efd.Validacao.Estrutural;
+using Api.Agente.Domain.Efd.Validacao.Negocio;
 using Api.Agente.Domain.Execucoes;
 
 namespace Api.Agente.Domain.Efd.Validacao;
@@ -20,13 +21,17 @@ public sealed record ResultadoValidacao(
 /// </summary>
 public static class MotorValidacao
 {
+    private const string MotivoSemTabelaNcm =
+        "Nenhuma versão importada da tabela de NCM cobre o período do arquivo, ou a tabela está indisponível.";
+
     public static async Task<ResultadoValidacao> ValidarAsync(
         Stream arquivo,
         DefinicaoLeiaute leiaute,
         CatalogoRegras catalogo,
         IdentificacaoArquivo identificacao,
         int ocorrenciasDetalhadasPorRegra,
-        CancellationToken cancelamento)
+        CancellationToken cancelamento,
+        ITabelaNcm? tabelaNcm = null)
     {
         var aplicaveis = catalogo.Regras
             .Where(r => r.SeAplica(leiaute.CodVer, identificacao.PeriodoFim, identificacao.IndPerfil, identificacao.Uf))
@@ -34,14 +39,29 @@ public static class MotorValidacao
         var ativas = aplicaveis.Where(r => r.EstaAtiva).ToDictionary(r => r.Id);
         var contexto = new ContextoValidacao(leiaute, ativas, ocorrenciasDetalhadasPorRegra);
 
-        IValidadorEstrutural[] validadores =
+        List<IValidadorEstrutural> validadores =
         [
             new ValidadorCampos(),
             new ValidadorBlocos(),
             new ValidadorHierarquia(),
             new ValidadorIndMov(),
             new ValidadorTotalizadores(),
+            new RegraUnidadeCadastrada(),
+            new RegraFatorConversao(),
+            new RegraTotaisDocumento(),
+            new RegraTributosReforma(),
         ];
+
+        if (tabelaNcm is not null)
+        {
+            validadores.Add(new RegraNcmVigente(tabelaNcm));
+        }
+
+        // Guarda todos os números do arquivo: só roda se a regra estiver ativa.
+        if (ativas.ContainsKey(RegrasNegocio.LacunaNumeracao))
+        {
+            validadores.Add(new RegraLacunaNumeracao());
+        }
 
         long totalLinhas = 0;
         await foreach (var linha in LeitorEfd.LerAsync(arquivo, cancelamento))
@@ -60,10 +80,22 @@ public static class MotorValidacao
             .Select(r => new ValidacaoNaoRealizada(r.Id, Categoria.AusenciaEvidencias, "Regra pendente de confirmação em fonte oficial."))
             .ToList();
 
-        return new ResultadoValidacao(contexto.Achados, contexto.Totais, [.. ativas.Keys], naoRealizadas, totalLinhas);
+        var dependentes = ativas.Values.Where(r => DependeDeDadoAusente(r, tabelaNcm)).ToList();
+        naoRealizadas.AddRange(dependentes
+            .Where(r => r.DependeDe!.Contains(RegrasNegocio.DependenciaTabelaNcm) && tabelaNcm is null)
+            .Select(r => new ValidacaoNaoRealizada(r.Id, Categoria.FalhaTecnica, MotivoSemTabelaNcm)));
+        naoRealizadas.AddRange(contexto.NaoRealizadas);
+
+        var executadas = ativas.Keys.Except(dependentes.Select(r => r.Id)).ToList();
+        return new ResultadoValidacao(contexto.Achados, contexto.Totais, executadas, naoRealizadas, totalLinhas);
     }
 
-    private static void Processar(LinhaEfd linha, DefinicaoLeiaute leiaute, IValidadorEstrutural[] validadores, ContextoValidacao contexto)
+    /// <summary>Regra que depende de dado ausente não executa e não conta como executada (FR-044).</summary>
+    private static bool DependeDeDadoAusente(RegraCatalogo regra, ITabelaNcm? tabelaNcm) =>
+        regra.DependeDe is { } dependencias
+        && dependencias.Any(d => d != RegrasNegocio.DependenciaTabelaNcm || tabelaNcm is null);
+
+    private static void Processar(LinhaEfd linha, DefinicaoLeiaute leiaute, List<IValidadorEstrutural> validadores, ContextoValidacao contexto)
     {
         if (!linha.TerminaEmCrLf)
         {

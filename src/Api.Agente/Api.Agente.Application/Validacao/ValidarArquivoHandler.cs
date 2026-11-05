@@ -1,4 +1,5 @@
 using Api.Agente.Application.Execucoes;
+using Api.Agente.Application.TabelasReferencia;
 using Api.Agente.Domain.Achados;
 using Api.Agente.Domain.Efd;
 using Api.Agente.Domain.Efd.Identificacao;
@@ -18,6 +19,7 @@ public sealed class ValidarArquivoHandler(
     IFilaExecucoes fila,
     ILimitadorExecucoes limitador,
     DadosEfd dados,
+    IRepositorioNcm tabelasNcm,
     ParametrosValidacao parametros,
     TimeProvider relogio)
 {
@@ -129,11 +131,14 @@ public sealed class ValidarArquivoHandler(
         execucao.AtualizarEtapa(4, StatusEtapa.Executando, relogio.GetUtcNow());
         await repositorio.SalvarAsync(execucao, cancelamento);
 
+        // Carregada uma vez por execução. Sem tabela, a regra de NCM fica como não realizada (FR-022).
+        var tabelaNcm = await tabelasNcm.CarregarVigenteAsync(identificacao!.PeriodoInicio, identificacao.PeriodoFim, cancelamento);
+
         ResultadoValidacao resultado;
         await using (var arquivo = armazenamento.AbrirLeitura(caminho))
         {
             resultado = await MotorValidacao.ValidarAsync(
-                arquivo, leiaute!, dados.Catalogo, identificacao!, parametros.OcorrenciasDetalhadasPorRegra, cancelamento);
+                arquivo, leiaute!, dados.Catalogo, identificacao, parametros.OcorrenciasDetalhadasPorRegra, cancelamento, tabelaNcm);
         }
 
         execucao.AplicarResultado(resultado.Achados, resultado.Totais, resultado.RegrasExecutadas, resultado.NaoRealizadas);

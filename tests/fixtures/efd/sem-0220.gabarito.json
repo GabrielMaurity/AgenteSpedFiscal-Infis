@@ -1,0 +1,11 @@
+{
+  "status": "valido",
+  "achados": [
+    {
+      "regraId": "EFD-NEG-002",
+      "registro": "C170",
+      "linha": 14,
+      "campo": "UNID"
+    }
+  ]
+}
