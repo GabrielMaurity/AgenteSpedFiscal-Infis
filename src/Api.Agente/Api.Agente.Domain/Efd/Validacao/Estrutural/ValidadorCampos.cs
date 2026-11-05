@@ -31,11 +31,17 @@ public sealed class ValidadorCampos : IValidadorEstrutural
                 definicao.Codigo,
                 encontrado: campos.Length.ToString(CultureInfo.InvariantCulture),
                 esperado: definicao.Campos.Count.ToString(CultureInfo.InvariantCulture));
+
+            // Com a contagem errada, não se sabe a que campo cada posição corresponde: validar geraria achados falsos.
+            return;
         }
 
-        for (var i = 0; i < Math.Min(campos.Length, definicao.Campos.Count); i++)
+        var exigidosNaSituacao = definicao.CamposExigidosNaSituacao(campos);
+        for (var i = 0; i < definicao.Campos.Count; i++)
         {
-            ValidarCampo(linha.Numero, definicao, definicao.Campos[i], campos[i], contexto);
+            var campo = definicao.Campos[i];
+            var exigido = exigidosNaSituacao?.Contains(campo.Nome) ?? campo.EhObrigatorio;
+            ValidarCampo(linha.Numero, definicao, campo, campos[i], exigido, contexto);
         }
     }
 
@@ -43,11 +49,11 @@ public sealed class ValidadorCampos : IValidadorEstrutural
     {
     }
 
-    private static void ValidarCampo(long numeroLinha, DefinicaoRegistro registro, DefinicaoCampo campo, string valor, ContextoValidacao contexto)
+    private static void ValidarCampo(long numeroLinha, DefinicaoRegistro registro, DefinicaoCampo campo, string valor, bool exigido, ContextoValidacao contexto)
     {
         if (valor.Length == 0)
         {
-            if (campo.EhObrigatorio)
+            if (exigido)
             {
                 contexto.Emitir(
                     RegrasEstruturais.CampoObrigatorio,

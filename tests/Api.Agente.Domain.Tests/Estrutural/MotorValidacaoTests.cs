@@ -28,6 +28,7 @@ public class MotorValidacaoTests
     [InlineData("campos-faltando")]
     [InlineData("caractere-invalido")]
     [InlineData("injecao-prompt")]
+    [InlineData("ficticio-completo-2026-01")]
     public async Task Achados_batem_exatamente_com_o_gabarito(string caso)
     {
         var gabarito = FixturesEfd.LerGabarito(caso);
@@ -259,6 +260,118 @@ public class MotorValidacaoTests
 
         Assert.Equal(pai, definicao.Pai);
         Assert.Equal(nivel, definicao.Nivel);
+    }
+
+    private static async Task<string> TextoFicticioAsync() =>
+        Encoding.Latin1.GetString(await File.ReadAllBytesAsync(Path.Combine(AppContext.BaseDirectory, "fixtures", "efd", "ficticio-completo-2026-01.txt"), Cancelamento));
+
+    private static string Trocar(string texto, string de, string para)
+    {
+        Assert.Contains(de, texto, StringComparison.Ordinal);
+        return texto.Replace(de, para, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("|0990|17|", "|0990|16|", "0990", "17")]
+    [InlineData("|9990|39|", "|9990|38|", "9990", "39")]
+    public async Task Encerramento_soma_o_0000_e_o_9999_conforme_o_guia(string de, string para, string registro, string esperado)
+    {
+        var texto = Trocar(await TextoFicticioAsync(), de, para);
+
+        var resultado = await FixturesEfd.ValidarAsync(Arquivo(texto), Cancelamento);
+
+        var achado = Assert.Single(resultado.Achados);
+        Assert.Equal(RegrasEstruturais.TotalBloco, achado.RegraId);
+        Assert.Equal(registro, achado.Registro);
+        Assert.Equal(esperado, achado.ValorEsperado);
+    }
+
+    [Fact]
+    public async Task Quantidade_errada_de_campos_gera_um_unico_achado_na_linha()
+    {
+        var texto = Trocar(await TextoFicticioAsync(), "|CLIENTE TESTE S/A|1058|", "|CLIENTE TESTE S/A|RJ|1058|");
+
+        var resultado = await FixturesEfd.ValidarAsync(Arquivo(texto), Cancelamento);
+
+        var achado = Assert.Single(resultado.Achados);
+        Assert.Equal(RegrasEstruturais.QuantidadeCampos, achado.RegraId);
+        Assert.Equal("0150", achado.Registro);
+    }
+
+    [Fact]
+    public async Task Documento_regular_continua_exigindo_os_campos_obrigatorios()
+    {
+        var texto = Trocar(await TextoFicticioAsync(), "|22012026|23012026|2500,00|", "||23012026|2500,00|");
+
+        var resultado = await FixturesEfd.ValidarAsync(Arquivo(texto), Cancelamento);
+
+        var achado = Assert.Single(resultado.Achados);
+        Assert.Equal(RegrasEstruturais.CampoObrigatorio, achado.RegraId);
+        Assert.Equal("DT_DOC", achado.Campo);
+    }
+
+    [Fact]
+    public async Task Documento_cancelado_ainda_exige_os_campos_da_excecao()
+    {
+        var texto = Trocar(await TextoFicticioAsync(), "|C100|1|0||55|02|", "|C100||0||55|02|");
+
+        var resultado = await FixturesEfd.ValidarAsync(Arquivo(texto), Cancelamento);
+
+        var achado = Assert.Single(resultado.Achados);
+        Assert.Equal(RegrasEstruturais.CampoObrigatorio, achado.RegraId);
+        Assert.Equal("IND_OPER", achado.Campo);
+    }
+
+    [Fact]
+    public async Task Tipo_do_item_com_tamanho_invalido_e_apontado()
+    {
+        var texto = Trocar(await TextoFicticioAsync(), "|UN|00|32041700|", "|UN|32041700|32041700|");
+
+        var resultado = await FixturesEfd.ValidarAsync(Arquivo(texto), Cancelamento);
+
+        var achado = Assert.Single(resultado.Achados);
+        Assert.Equal(RegrasEstruturais.TamanhoCampo, achado.RegraId);
+        Assert.Equal("TIPO_ITEM", achado.Campo);
+    }
+
+    [Theory]
+    [InlineData("C500", "02", "COD_PART", false)]
+    [InlineData("C500", "00", "COD_PART", true)]
+    [InlineData("D100", "02", "CHV_CTE", true)]
+    [InlineData("D100", "05", "CHV_CTE", false)]
+    [InlineData("D400", "08", "DT_DOC", true)]
+    [InlineData("1500", "06", "DT_DOC", true)]
+    public void Excecoes_de_obrigatoriedade_seguem_a_situacao_do_documento(string registro, string situacao, string campo, bool exigido)
+    {
+        var definicao = FixturesEfd.Dados.Leiautes[0].ObterRegistro(registro)!;
+        var valores = definicao.Campos.Select(c => c.Nome == "COD_SIT" ? situacao : "").ToArray();
+
+        var exigidos = definicao.CamposExigidosNaSituacao(valores);
+
+        Assert.Equal(exigido, exigidos?.Contains(campo) ?? definicao.Campos.Single(c => c.Nome == campo).EhObrigatorio);
+    }
+
+    [Theory]
+    [InlineData("1010", "IND_EXP", "C", 1, null, "O")]
+    [InlineData("1010", "IND_AER", "C", 1, null, "O")]
+    [InlineData("0200", "TIPO_ITEM", "N", 2, null, "O")]
+    [InlineData("K100", "DT_INI", "N", 8, null, "O")]
+    [InlineData("H020", "BC_ICMS", "N", null, 2, "O")]
+    [InlineData("1800", "VL_DIF", "N", null, 2, "O")]
+    [InlineData("E116", "MES_REF", "N", 6, null, "O")]
+    [InlineData("E250", "MES_REF", "N", 6, null, "O")]
+    [InlineData("E316", "MES_REF", "N", 6, null, "O")]
+    [InlineData("1926", "MES_REF", "N", 6, null, "O")]
+    [InlineData("C790", "CFOP", "N", 4, null, "O")]
+    [InlineData("0100", "COD_MUN", "N", 7, null, "O")]
+    public void Leiaute_020_le_o_campo_como_esta_no_guia(string registro, string nome, string tipo, int? tamanho, int? decimais, string obrigatorio)
+    {
+        var campo = FixturesEfd.Dados.Leiautes[0].ObterRegistro(registro)!.Campos.Single(c => c.Nome == nome);
+
+        Assert.Equal(tipo, campo.Tipo);
+        Assert.Equal(tamanho, campo.Tamanho);
+        Assert.Equal(decimais, campo.Decimais);
+        Assert.Equal(obrigatorio, campo.Obrigatorio);
     }
 
     [Fact]

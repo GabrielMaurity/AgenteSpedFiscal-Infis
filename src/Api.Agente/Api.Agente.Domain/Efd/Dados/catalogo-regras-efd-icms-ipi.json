@@ -152,8 +152,8 @@
       "severidade": "impeditiva",
       "status": "ativa",
       "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
-      "fonte": { "documento": "Guia Prático da EFD-ICMS/IPI", "versao": "3.2.4", "localizacao": "Campo de quantidade de linhas dos registros de encerramento (ex.: registro C990, p. 173)" },
-      "acaoCorretiva": "Informar a quantidade de linhas do bloco, incluindo abertura e encerramento."
+      "fonte": { "documento": "Guia Prático da EFD-ICMS/IPI", "versao": "3.2.4", "localizacao": "Campo de quantidade de linhas dos registros de encerramento (ex.: registros 0990, p. 48; C990, p. 173; 9990, p. 326)" },
+      "acaoCorretiva": "Informar a quantidade de linhas do bloco, incluindo abertura e encerramento. No bloco 0, somar também o registro 0000; no bloco 9, somar também o registro 9999."
     },
     {
       "id": "EFD-ESTR-016",

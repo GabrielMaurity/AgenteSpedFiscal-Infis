@@ -25,10 +25,8 @@ public sealed class ValidadorTotalizadores : IValidadorEstrutural
             return;
         }
 
-        if (codigo is not ("0000" or "9999"))
-        {
-            _porBloco[definicao.Bloco] = _porBloco.GetValueOrDefault(definicao.Bloco) + 1;
-        }
+        // O 0000 soma no bloco 0 e o 9999 soma no bloco 9, mesmo sem pertencer a eles (Guia, registros 0990 e 9990).
+        _porBloco[definicao.Bloco] = _porBloco.GetValueOrDefault(definicao.Bloco) + 1;
 
         if (codigo == "9900" && campos.Length > 2 && TentarQuantidade(campos[2], out var quantidade9900))
         {
