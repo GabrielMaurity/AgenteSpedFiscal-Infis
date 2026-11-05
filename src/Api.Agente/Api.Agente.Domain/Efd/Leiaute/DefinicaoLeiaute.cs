@@ -34,7 +34,21 @@ public sealed record DefinicaoRegistro(
 {
     private const string CampoSituacao = "COD_SIT";
 
+    // Nomes repetidos (ALIQ_PIS do C170) apontam para o primeiro campo.
+    private readonly Dictionary<string, int> _indices = Campos
+        .GroupBy(c => c.Nome, StringComparer.Ordinal)
+        .ToDictionary(g => g.Key, g => g.First().Numero - 1, StringComparer.Ordinal);
+
     public bool OcorrenciaUnica => Ocorrencia == "1:1";
+
+    public bool TemCampo(string nome) => _indices.ContainsKey(nome);
+
+    /// <summary>Com a quantidade errada, a posição não identifica o campo: a linha não serve para regra de negócio.</summary>
+    public bool TemQuantidadeCorreta(string[] valores) => valores.Length == Campos.Count;
+
+    /// <summary>Valor do campo na linha, ou vazio quando o registro não o tem.</summary>
+    public string Valor(string[] valores, string nome) =>
+        _indices.TryGetValue(nome, out var indice) && indice < valores.Length ? valores[indice] : "";
 
     /// <summary>Campos exigidos na situação informada na linha; nulo quando vale a coluna de obrigatoriedade.</summary>
     public IReadOnlyList<string>? CamposExigidosNaSituacao(string[] valores)

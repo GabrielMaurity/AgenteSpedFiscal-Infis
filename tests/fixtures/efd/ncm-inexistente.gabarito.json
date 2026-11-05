@@ -1,0 +1,11 @@
+{
+  "status": "valido",
+  "achados": [
+    {
+      "regraId": "EFD-NEG-003",
+      "registro": "0200",
+      "linha": 7,
+      "campo": "COD_NCM"
+    }
+  ]
+}

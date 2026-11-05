@@ -3,6 +3,7 @@ using Api.Agente.Domain.Achados;
 using Api.Agente.Domain.Efd.Catalogo;
 using Api.Agente.Domain.Efd.Leiaute;
 using Api.Agente.Domain.Efd.Validacao;
+using Api.Agente.Domain.Efd.Validacao.Negocio;
 using Api.Agente.Domain.Execucoes;
 
 namespace Api.Agente.Domain.Tests.Estrutural;
@@ -29,6 +30,12 @@ public class MotorValidacaoTests
     [InlineData("caractere-invalido")]
     [InlineData("injecao-prompt")]
     [InlineData("ficticio-completo-2026-01")]
+    [InlineData("unidade-sem-0190")]
+    [InlineData("sem-0220")]
+    [InlineData("c100-divergente")]
+    [InlineData("lacuna-numeracao-propria")]
+    [InlineData("lacuna-numeracao-terceiros")]
+    [InlineData("cbs-ibs-2026")]
     public async Task Achados_batem_exatamente_com_o_gabarito(string caso)
     {
         var gabarito = FixturesEfd.LerGabarito(caso);
@@ -76,8 +83,13 @@ public class MotorValidacaoTests
         var resultado = await FixturesEfd.ValidarCasoAsync("valido-perfil-a", Cancelamento);
 
         Assert.Contains(RegrasEstruturais.AberturaEncerramento, resultado.RegrasExecutadas);
-        Assert.Equal(18, resultado.RegrasExecutadas.Count);
-        Assert.Empty(resultado.NaoRealizadas);
+        Assert.Contains(RegrasNegocio.TotaisAnaliticos, resultado.RegrasExecutadas);
+
+        // As 18 estruturais e as 6 de negócio que não dependem de dado externo nem estão pendentes.
+        Assert.Equal(24, resultado.RegrasExecutadas.Count);
+        Assert.Equal(
+            [RegrasNegocio.NcmVigente, RegrasNegocio.LacunaNumeracao, RegrasNegocio.TributosReforma],
+            resultado.NaoRealizadas.Select(n => n.Referencia).Order());
     }
 
     [Fact]

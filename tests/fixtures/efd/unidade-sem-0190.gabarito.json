@@ -1,0 +1,17 @@
+{
+  "status": "valido",
+  "achados": [
+    {
+      "regraId": "EFD-NEG-001",
+      "registro": "0200",
+      "linha": 7,
+      "campo": "UNID_INV"
+    },
+    {
+      "regraId": "EFD-NEG-001",
+      "registro": "C170",
+      "linha": 13,
+      "campo": "UNID"
+    }
+  ]
+}

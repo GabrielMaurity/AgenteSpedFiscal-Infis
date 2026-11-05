@@ -1,5 +1,5 @@
 {
-  "versaoCatalogo": "1.0.0",
+  "versaoCatalogo": "1.1.0",
   "fontesOficiais": [
     { "documento": "Guia Prático da EFD-ICMS/IPI", "versao": "3.2.4", "ato": "Ato COTEPE/ICMS nº 44/2018" },
     { "documento": "Nota Técnica EFD ICMS IPI 2026.001", "versao": "1.0", "ato": "Ato COTEPE/ICMS nº 44/2018" }
@@ -184,6 +184,108 @@
       "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
       "fonte": { "documento": "Nota Técnica EFD ICMS IPI 2026.001", "versao": "1.0", "localizacao": "Item 1.1" },
       "acaoCorretiva": "Gerar o registro 0000 como primeira linha e o registro 9999 como última."
+    },
+    {
+      "id": "EFD-NEG-001",
+      "descricao": "Toda unidade de medida usada em cadastro, documento ou inventário está cadastrada no registro 0190.",
+      "tipo": "negocio",
+      "severidade": "impeditiva",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Guia Prático da EFD-ICMS/IPI", "versao": "3.2.4", "localizacao": "Registro 0200, campo 06, p. 37; registro 0220, campo 02, p. 41; registro C170, campo 06, p. 82; registro H010, campo 03, p. 267 (exige a unidade no UNID_INV do 0200, que deve estar no 0190); e o campo de unidade dos demais registros" },
+      "acaoCorretiva": "Cadastrar a unidade no registro 0190 ou corrigir a unidade informada."
+    },
+    {
+      "id": "EFD-NEG-002",
+      "descricao": "Unidade movimentada diferente da unidade de estoque do item exige registro 0220, exceto material de uso e consumo.",
+      "tipo": "negocio",
+      "severidade": "impeditiva",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Guia Prático da EFD-ICMS/IPI", "versao": "3.2.4", "localizacao": "Registro C170, campo 06, alínea b, p. 82; registros C425, p. 125; C180, p. 96; C181, p. 99; C185, p. 102; C330, p. 115; C380, p. 120; C430, p. 127; C480, p. 133; C815, p. 161; C870, p. 166; C880, p. 168; G140, p. 264" },
+      "acaoCorretiva": "Informar o registro 0220 do item com o fator de conversão da unidade movimentada."
+    },
+    {
+      "id": "EFD-NEG-003",
+      "descricao": "O NCM do item existe e está vigente na tabela oficial importada para o período do arquivo.",
+      "tipo": "negocio",
+      "severidade": "advertencia",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Guia Prático da EFD-ICMS/IPI", "versao": "3.2.4", "localizacao": "Registro 0200, campo 08 (COD_NCM), p. 38" },
+      "dependeDe": ["tabela:ncm"],
+      "acaoCorretiva": "Corrigir o NCM do item conforme a tabela oficial vigente no período."
+    },
+    {
+      "id": "EFD-NEG-004",
+      "descricao": "Os valores de ICMS, ICMS ST e IPI do C100 são a soma dos registros C190 do documento.",
+      "tipo": "negocio",
+      "severidade": "impeditiva",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Guia Prático da EFD-ICMS/IPI", "versao": "3.2.4", "localizacao": "Registro C100, campos 21 a 25, p. 68" },
+      "acaoCorretiva": "Corrigir o valor no C100 ou nos C190 do documento."
+    },
+    {
+      "id": "EFD-NEG-005",
+      "descricao": "O VL_DOC do C100 corresponde à soma do VL_OPR dos registros C190 do documento.",
+      "tipo": "negocio",
+      "severidade": "advertencia",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Guia Prático da EFD-ICMS/IPI", "versao": "3.2.4", "localizacao": "Registro C100, campo 12 (VL_DOC), p. 67; registro C190, campo 05 (VL_OPR), p. 107" },
+      "acaoCorretiva": "Conferir a composição do VL_DOC e do VL_OPR do documento."
+    },
+    {
+      "id": "EFD-NEG-006",
+      "descricao": "O VL_MERC do C100 corresponde à soma do VL_ITEM dos registros C170 do documento.",
+      "tipo": "negocio",
+      "severidade": "advertencia",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Guia Prático da EFD-ICMS/IPI", "versao": "3.2.4", "localizacao": "Registro C170, campo 07 (VL_ITEM), p. 82; registro C100, campo 16 (VL_MERC), p. 68" },
+      "acaoCorretiva": "Conferir o VL_MERC do documento e o VL_ITEM dos itens."
+    },
+    {
+      "id": "EFD-NEG-007",
+      "descricao": "Os valores do C190 são a soma dos C170 com a mesma combinação de CST, CFOP e alíquota, e toda combinação existe nos itens.",
+      "tipo": "negocio",
+      "severidade": "impeditiva",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Guia Prático da EFD-ICMS/IPI", "versao": "3.2.4", "localizacao": "Registro C190, validação do registro, p. 106; campos 06 a 09, p. 107" },
+      "acaoCorretiva": "Corrigir o C190 ou os C170 para que a combinação e os valores coincidam."
+    },
+    {
+      "id": "EFD-NEG-008",
+      "descricao": "Lacuna na numeração de documentos de emissão própria, por modelo e série.",
+      "tipo": "negocio",
+      "severidade": "advertencia",
+      "status": "pendente_confirmacao",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "origemCandidata": "documento-base, seção 6 (sequência de NF-e). Não localizada no Guia 3.2.4 nem na NT 2026.001, e o Guia dispensa informar denegados e inutilizados desde 12/2021 (registro C100, p. 63).",
+      "acaoCorretiva": "Conferir a sequência dos documentos emitidos no período."
+    },
+    {
+      "id": "EFD-NEG-009",
+      "descricao": "CBS, IBS e IS não integram o VL_OPR dos registros analíticos; em 2026, a inclusão no VL_DOC não é exigida.",
+      "tipo": "negocio",
+      "severidade": "advertencia",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Guia Prático da EFD-ICMS/IPI", "versao": "3.2.4", "localizacao": "Cap. I, Seção 10, p. 7; registro C190, campo 05, p. 107" },
+      "dependeDe": ["xml:documento"],
+      "acaoCorretiva": "Conferir no XML do documento que CBS, IBS e IS ficaram fora do valor da operação."
+    },
+    {
+      "id": "EFD-NEG-010",
+      "descricao": "A partir de 2027, CBS, IBS e IS integram o valor total do documento fiscal.",
+      "tipo": "negocio",
+      "severidade": "advertencia",
+      "status": "pendente_confirmacao",
+      "aplicacao": { "codVer": ["021"], "periodoInicio": "2027-01" },
+      "origemCandidata": "documento-base, seção 7, item 2. Depende da versão do Guia aplicável a 2027 (FR-025).",
+      "acaoCorretiva": "Conferir a composição do VL_DOC conforme o Guia aplicável ao período."
     }
   ]
 }

@@ -1,0 +1,23 @@
+{
+  "status": "valido",
+  "achados": [
+    {
+      "regraId": "EFD-NEG-004",
+      "registro": "C100",
+      "linha": 12,
+      "campo": "VL_BC_ICMS"
+    },
+    {
+      "regraId": "EFD-NEG-005",
+      "registro": "C100",
+      "linha": 12,
+      "campo": "VL_DOC"
+    },
+    {
+      "regraId": "EFD-NEG-006",
+      "registro": "C100",
+      "linha": 12,
+      "campo": "VL_MERC"
+    }
+  ]
+}
