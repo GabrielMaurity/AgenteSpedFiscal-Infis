@@ -1,8 +1,10 @@
 using System.Text.Json.Serialization;
 using Api.Agente.Endpoints.A2A;
 using Api.Agente.Endpoints.Infraestrutura;
+using Api.Agente.Endpoints.Regras;
 using Api.Agente.Endpoints.Saude;
 using Api.Agente.Endpoints.Seguranca;
+using Api.Agente.Endpoints.TabelasReferencia;
 using Api.Agente.Endpoints.Validacoes;
 using Api.Agente.Infrastructure.Configuracao;
 using Api.Agente.Infrastructure.Observabilidade;
@@ -39,6 +41,8 @@ app.UseRateLimiter();
 
 app.MapSaude();
 app.MapValidacoes();
+app.MapTabelasReferencia();
+app.MapRegras();
 app.MapA2aAgente(app.Configuration);
 
 await app.RunAsync();

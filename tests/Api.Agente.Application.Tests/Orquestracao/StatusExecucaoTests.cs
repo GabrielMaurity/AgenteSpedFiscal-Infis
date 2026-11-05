@@ -1,6 +1,9 @@
 using Api.Agente.Application.Execucoes;
+using Api.Agente.Application.TabelasReferencia;
 using Api.Agente.Application.Validacao;
+using Api.Agente.Domain.Achados;
 using Api.Agente.Domain.Efd;
+using Api.Agente.Domain.Efd.Validacao.Negocio;
 using Api.Agente.Domain.Execucoes;
 
 namespace Api.Agente.Application.Tests.Orquestracao;
@@ -92,15 +95,30 @@ public class StatusExecucaoTests
         public void Liberar(string orgId) => EmUso--;
     }
 
+    private sealed class TabelasNcmMemoria : IRepositorioNcm
+    {
+        public ITabelaNcm? Vigente { get; set; }
+
+        public Task<bool> ImportarAsync(TabelaNcmImportada tabela, IReadOnlyList<LinhaNcm> linhas, CancellationToken cancelamento) =>
+            Task.FromResult(true);
+
+        public Task<IReadOnlyList<TabelaNcmImportada>> ListarAsync(CancellationToken cancelamento) =>
+            Task.FromResult<IReadOnlyList<TabelaNcmImportada>>([]);
+
+        public Task<ITabelaNcm?> CarregarVigenteAsync(DateOnly periodoInicio, DateOnly periodoFim, CancellationToken cancelamento) =>
+            Task.FromResult(Vigente);
+    }
+
     private sealed class Cenario
     {
         public RepositorioMemoria Repositorio { get; } = new();
         public ArmazenamentoMemoria Armazenamento { get; } = new();
         public FilaMemoria Fila { get; } = new();
         public LimitadorMemoria Limitador { get; } = new();
+        public TabelasNcmMemoria TabelasNcm { get; } = new();
 
         public ValidarArquivoHandler Handler => new(
-            Repositorio, Armazenamento, Fila, Limitador, Dados, new ParametrosValidacao(1_000), TimeProvider.System);
+            Repositorio, Armazenamento, Fila, Limitador, Dados, TabelasNcm, new ParametrosValidacao(1_000), TimeProvider.System);
 
         public async Task<Execucao> ProcessarAsync(string caso)
         {
@@ -186,7 +204,7 @@ public class StatusExecucaoTests
     {
         var cenario = new Cenario();
         var limitado = new ValidarArquivoHandler(
-            cenario.Repositorio, cenario.Armazenamento, cenario.Fila, new LimitadorMemoria(0), Dados, new ParametrosValidacao(1), TimeProvider.System);
+            cenario.Repositorio, cenario.Armazenamento, cenario.Fila, new LimitadorMemoria(0), Dados, cenario.TabelasNcm, new ParametrosValidacao(1), TimeProvider.System);
 
         await Assert.ThrowsAsync<LimiteExecucoesException>(() => limitado.ReceberAsync(
             new ComandoValidacao(new MemoryStream([1]), "a.txt", "org", "u", "c", CanalExecucao.Rest), Cancelamento));
@@ -205,6 +223,30 @@ public class StatusExecucaoTests
 
         Assert.Equal(0, cenario.Limitador.EmUso);
         Assert.Empty(cenario.Repositorio.Itens);
+    }
+
+    [Fact]
+    public async Task Sem_tabela_de_ncm_a_execucao_conclui_e_lista_a_regra_como_falha_tecnica()
+    {
+        var execucao = await new Cenario().ProcessarAsync("ncm-inexistente");
+
+        Assert.Equal(EstadoExecucao.ConcluidaComLimitacoes, execucao.Estado);
+        Assert.Equal(Categoria.FalhaTecnica, Assert.Single(execucao.ValidacoesNaoRealizadas, v => v.Referencia == RegrasNegocio.NcmVigente).Categoria);
+        Assert.Empty(execucao.Achados);
+    }
+
+    [Fact]
+    public async Task Com_tabela_de_ncm_o_achado_entra_no_resultado()
+    {
+        var cenario = new Cenario();
+        cenario.TabelasNcm.Vigente = new TabelaNcm("2026.1", [new CodigoNcm("32041700", null, null)], new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31));
+
+        var execucao = await cenario.ProcessarAsync("ncm-inexistente");
+
+        var achado = Assert.Single(execucao.Achados);
+        Assert.Equal(RegrasNegocio.NcmVigente, achado.RegraId);
+        Assert.Equal(Categoria.InconsistenciaNegocio, achado.Categoria);
+        Assert.Contains(RegrasNegocio.NcmVigente, execucao.RegrasExecutadas);
     }
 
     [Fact]
