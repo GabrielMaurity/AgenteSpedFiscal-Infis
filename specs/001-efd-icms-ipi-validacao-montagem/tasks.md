@@ -165,24 +165,31 @@ conhecida, e verificar o achado com localização, regra e fonte.
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T065 [P] [US2] Criar fixtures com gabarito em `tests/fixtures/efd/`: `unidade-sem-0190.txt`, `sem-0220.txt`, `ncm-inexistente.txt`, `c100-divergente.txt`, `lacuna-numeracao-propria.txt`, `lacuna-numeracao-terceiros.txt` (não deve gerar achado), `cbs-ibs-2026.txt` (não deve gerar achado de `VL_DOC`)
-- [ ] T066 [P] [US2] Criar testes de cada regra de negócio em `tests/Api.Agente.Domain.Tests/Negocio/` (um arquivo por regra de T068–T073), incluindo NCM sem tabela importada → validação não realizada com `falha_tecnica`
-- [ ] T067 [P] [US2] Criar `tests/Api.Agente.Integration.Tests/TabelasReferencia/NcmEndpointsTests.cs`: importação `201`, mesma versão `409`, seleção da versão vigente no período, papel `admin_base` exigido
+- [X] T065 [P] [US2] Criar fixtures com gabarito em `tests/fixtures/efd/`: `unidade-sem-0190.txt`, `sem-0220.txt`, `ncm-inexistente.txt`, `c100-divergente.txt`, `lacuna-numeracao-propria.txt`, `lacuna-numeracao-terceiros.txt` (não deve gerar achado), `cbs-ibs-2026.txt` (não deve gerar achado de `VL_DOC`)
+- [X] T066 [P] [US2] Criar testes de cada regra de negócio em `tests/Api.Agente.Domain.Tests/Negocio/` (um arquivo por regra de T068–T073), incluindo NCM sem tabela importada → validação não realizada com `falha_tecnica`
+- [X] T067 [P] [US2] Criar `tests/Api.Agente.Integration.Tests/TabelasReferencia/NcmEndpointsTests.cs`: importação `201`, mesma versão `409`, seleção da versão vigente no período, papel `admin_base` exigido
 
 ### Implementation for User Story 2
 
-- [ ] T068 [P] [US2] Criar a regra de unidade cadastrada no `0190` (FR-020) em `src/Api.Agente/Api.Agente.Domain/Efd/Validacao/Negocio/RegraUnidadeCadastrada.cs`
-- [ ] T069 [P] [US2] Criar a regra de fator de conversão no `0220` (FR-021) em `src/Api.Agente/Api.Agente.Domain/Efd/Validacao/Negocio/RegraFatorConversao.cs`
-- [ ] T070 [P] [US2] Criar a regra de NCM existente e vigente por meio da porta `ITabelaNcm` (sem consulta externa; sem versão importada para o período ⇒ validação não realizada; FR-022) em `src/Api.Agente/Api.Agente.Domain/Efd/Validacao/Negocio/RegraNcmVigente.cs`
-- [ ] T071 [P] [US2] Criar a regra de coerência `C100` × `C170` × `C190` com a fórmula da fonte catalogada, informando valores comparados e diferença (FR-023) em `src/Api.Agente/Api.Agente.Domain/Efd/Validacao/Negocio/RegraTotaisDocumento.cs`
-- [ ] T072 [P] [US2] Criar a regra de lacuna de numeração apenas para documentos de emissão própria, por modelo e série, desconsiderando cancelados, denegados e inutilizados, com severidade `advertencia` (FR-024) em `src/Api.Agente/Api.Agente.Domain/Efd/Validacao/Negocio/RegraLacunaNumeracao.cs`
-- [ ] T073 [P] [US2] Criar a regra de CBS/IBS/IS do Guia 3.2.4 (Cap. I, Seção 10): sem exigência de inclusão no `VL_DOC` em 2026; verificação do `VL_OPR` registrada como `ausencia_evidencias` quando os valores não constam do arquivo (FR-025) em `src/Api.Agente/Api.Agente.Domain/Efd/Validacao/Negocio/RegraTributosReforma.cs`
-- [ ] T074 [US2] Incluir no catálogo as regras `EFD-NEG-001`… com fonte no Guia 3.2.4 e registrar como `pendente_confirmacao` (com `origemCandidata`) as regras do documento-base cuja fonte oficial não for encontrada (FR-030, FR-031) em `src/Api.Agente/Api.Agente.Domain/Efd/Dados/catalogo-regras-efd-icms-ipi.json`
-- [ ] T075 [US2] Registrar as regras de negócio no `MotorValidacao`, tratando `dependeDe` (`tabela:ncm`, `xml:documento`) como validação não realizada quando o dado não existe, em `src/Api.Agente/Api.Agente.Domain/Efd/Validacao/MotorValidacao.cs`
-- [ ] T076 [US2] Criar a importação da tabela de NCM (parser, versão, vigência, SHA-256, sem duplicidade) em `src/Api.Agente/Api.Agente.Application/TabelasReferencia/ImportarNcmHandler.cs`, o repositório que carrega os códigos vigentes uma vez por execução em `src/Api.Agente/Api.Agente.Infrastructure/TabelasReferencia/RepositorioNcm.cs` e os endpoints `POST`/`GET` `/api/v1/tabelas-referencia/ncm` em `src/Api.Agente/Api.Agente.Endpoints/TabelasReferencia/NcmEndpoints.cs` (FR-063)
-- [ ] T077 [US2] Criar o endpoint `GET /api/v1/regras` (filtro por `status`) em `src/Api.Agente/Api.Agente.Endpoints/Regras/RegrasEndpoints.cs`
+- [X] T068 [P] [US2] Criar a regra de unidade cadastrada no `0190` (FR-020) em `src/Api.Agente/Api.Agente.Domain/Efd/Validacao/Negocio/RegraUnidadeCadastrada.cs`
+- [X] T069 [P] [US2] Criar a regra de fator de conversão no `0220` (FR-021) em `src/Api.Agente/Api.Agente.Domain/Efd/Validacao/Negocio/RegraFatorConversao.cs`
+- [X] T070 [P] [US2] Criar a regra de NCM existente e vigente por meio da porta `ITabelaNcm` (sem consulta externa; sem versão importada para o período ⇒ validação não realizada; FR-022) em `src/Api.Agente/Api.Agente.Domain/Efd/Validacao/Negocio/RegraNcmVigente.cs`
+- [X] T071 [P] [US2] Criar a regra de coerência `C100` × `C170` × `C190` com a fórmula da fonte catalogada, informando valores comparados e diferença (FR-023) em `src/Api.Agente/Api.Agente.Domain/Efd/Validacao/Negocio/RegraTotaisDocumento.cs`
+- [X] T072 [P] [US2] Criar a regra de lacuna de numeração apenas para documentos de emissão própria, por modelo e série, desconsiderando cancelados, denegados e inutilizados, com severidade `advertencia` (FR-024) em `src/Api.Agente/Api.Agente.Domain/Efd/Validacao/Negocio/RegraLacunaNumeracao.cs`
+- [X] T073 [P] [US2] Criar a regra de CBS/IBS/IS do Guia 3.2.4 (Cap. I, Seção 10): sem exigência de inclusão no `VL_DOC` em 2026; verificação do `VL_OPR` registrada como `ausencia_evidencias` quando os valores não constam do arquivo (FR-025) em `src/Api.Agente/Api.Agente.Domain/Efd/Validacao/Negocio/RegraTributosReforma.cs`
+- [X] T074 [US2] Incluir no catálogo as regras `EFD-NEG-001`… com fonte no Guia 3.2.4 e registrar como `pendente_confirmacao` (com `origemCandidata`) as regras do documento-base cuja fonte oficial não for encontrada (FR-030, FR-031) em `src/Api.Agente/Api.Agente.Domain/Efd/Dados/catalogo-regras-efd-icms-ipi.json`
+- [X] T075 [US2] Registrar as regras de negócio no `MotorValidacao`, tratando `dependeDe` (`tabela:ncm`, `xml:documento`) como validação não realizada quando o dado não existe, em `src/Api.Agente/Api.Agente.Domain/Efd/Validacao/MotorValidacao.cs`
+- [X] T076 [US2] Criar a importação da tabela de NCM (parser, versão, vigência, SHA-256, sem duplicidade) em `src/Api.Agente/Api.Agente.Application/TabelasReferencia/ImportarNcmHandler.cs`, o repositório que carrega os códigos vigentes uma vez por execução em `src/Api.Agente/Api.Agente.Infrastructure/TabelasReferencia/RepositorioNcm.cs` e os endpoints `POST`/`GET` `/api/v1/tabelas-referencia/ncm` em `src/Api.Agente/Api.Agente.Endpoints/TabelasReferencia/NcmEndpoints.cs` (FR-063)
+- [X] T077 [US2] Criar o endpoint `GET /api/v1/regras` (filtro por `status`) em `src/Api.Agente/Api.Agente.Endpoints/Regras/RegrasEndpoints.cs`
 
 **Checkpoint**: casos de US2 detectados com localização e fonte; US1 continua passando.
+
+**Ressalvas da implementação**:
+
+- **T072 / FR-024:** a lógica existe e está testada, mas `EFD-NEG-008` fica `pendente_confirmacao` e não executa (P-01, FR-030): o Guia 3.2.4 e a NT 2026.001 não têm regra de lacuna de numeração de documentos, e o Guia dispensa informar denegados e inutilizados desde 12/2021. Cobre só o `C100`.
+- **T076:** o parser aceita JSON com `Nomenclaturas` e texto delimitado, mas ainda não foi testado com o arquivo oficial, que segue pendente.
+- **Severidades:** `impeditiva` foi usada onde o Guia traz validação explícita e `advertencia` onde a regra é indireta ou há texto conflitante (`EFD-NEG-003`, `005` e `006`). A classificação do PVA ainda será conferida em T108.
+- **Registros obrigatórios ausentes** (`E100`, `E110`, `1010`, obrigatoriedade por perfil) continuam sem regra e sem tarefa.
 
 ---
 
