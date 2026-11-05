@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Api.Rag.Domain\Api.Rag.Domain.csproj" />
+    <ProjectReference Include="..\..\Shared\AgenteSpedFiscal.Contracts.Mcp\AgenteSpedFiscal.Contracts.Mcp.csproj" />
+  </ItemGroup>
+</Project>

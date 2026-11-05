@@ -1,0 +1,204 @@
+openapi: 3.1.0
+info:
+  title: Api.Agente — AgenteSpedFiscal
+  version: 1.0.0
+  description: >
+    Validação de arquivos EFD ICMS/IPI, explicações e consultas, tabelas de referência.
+    Todos os endpoints exigem JWT Bearer com claims sub e org_id, exceto /health/*.
+    Toda resposta inclui o cabeçalho X-Correlation-Id.
+servers:
+  - url: http://localhost:8080
+security:
+  - bearer: []
+paths:
+  /api/v1/validacoes:
+    post:
+      summary: Envia um arquivo EFD ICMS/IPI para validação assíncrona (FR-001, FR-002)
+      x-papeis: [analista, agente_externo]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [arquivo]
+              properties:
+                arquivo: { type: string, format: binary, description: ".txt de até 500 MB (configurável)" }
+                contexto: { type: string, maxLength: 500 }
+                incluirAnaliseIa: { type: boolean, default: true }
+      responses:
+        "202":
+          description: Execução criada
+          headers:
+            Location: { schema: { type: string }, description: "/api/v1/validacoes/{execucaoId}" }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [execucaoId, status]
+                properties:
+                  execucaoId: { type: string, format: uuid }
+                  status: { const: recebida }
+        "400": { $ref: "#/components/responses/Problema" }
+        "413": { $ref: "#/components/responses/Problema" }
+        "415": { $ref: "#/components/responses/Problema" }
+        "429": { $ref: "#/components/responses/Problema" }
+    get:
+      summary: Lista execuções da organização (paginado)
+      x-papeis: [analista]
+      parameters:
+        - { name: pagina, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: tamanho, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+      responses:
+        "200": { description: Lista resumida de execuções }
+  /api/v1/validacoes/{execucaoId}:
+    parameters:
+      - { name: execucaoId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      summary: Obtém status e resultado da execução
+      x-papeis: [analista, agente_externo]
+      parameters:
+        - { name: paginaAchados, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+      responses:
+        "200":
+          description: Envelope da validação
+          content:
+            application/json:
+              schema: { $ref: "envelope-validacao.schema.json" }
+        "404": { $ref: "#/components/responses/Problema" }
+    delete:
+      summary: Exclui antecipadamente a execução e seu resultado (FR-082)
+      x-papeis: [analista]
+      responses:
+        "204": { description: Excluída }
+        "404": { $ref: "#/components/responses/Problema" }
+        "409": { $ref: "#/components/responses/Problema", description: "Execução ainda em processamento" }
+  /api/v1/validacoes/{execucaoId}/exportacao.csv:
+    parameters:
+      - { name: execucaoId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      summary: Baixa o resultado da execução em CSV (FR-048; layout em exportacao-csv.md)
+      x-papeis: [analista]
+      responses:
+        "200":
+          description: CSV em streaming
+          headers:
+            Content-Disposition: { schema: { type: string }, description: "attachment; filename=validacao-{execucaoId}.csv" }
+          content:
+            text/csv; charset=utf-8:
+              schema: { type: string }
+        "404": { $ref: "#/components/responses/Problema" }
+        "409": { description: "Execução ainda em processamento" }
+  /api/v1/conversas:
+    post:
+      summary: Cria conversa, opcionalmente vinculada a uma execução
+      x-papeis: [analista, agente_externo]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                execucaoId: { type: string, format: uuid }
+      responses:
+        "201": { description: "Conversa criada (conversaId)" }
+  /api/v1/conversas/{conversaId}/mensagens:
+    parameters:
+      - { name: conversaId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      summary: Pergunta ao agente ou pede explicação de achado (FR-050 a FR-054)
+      x-papeis: [analista, agente_externo]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [texto]
+              properties:
+                texto: { type: string, minLength: 1, maxLength: 4000 }
+                achadoId: { type: string }
+                periodo: { type: string, pattern: "^\\d{4}-\\d{2}$", description: "Seleciona a versão do manual aplicável" }
+      responses:
+        "200":
+          description: Resposta do agente
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [mensagemId, resposta, fundamentada, fundamentadaEmFonteOficial, referencias, limitacoes]
+                properties:
+                  mensagemId: { type: string }
+                  resposta: { type: string }
+                  fundamentada: { type: boolean, description: "false quando não houve evidência suficiente (FR-052) ou a pergunta depende do arquivo já descartado" }
+                  fundamentadaEmFonteOficial: { type: boolean, description: "Calculado pelo sistema; false quando só há trechos internos (FR-051)" }
+                  referencias:
+                    type: array
+                    items:
+                      type: object
+                      required: [trechoId, documento, versao, localizacao, classificacao]
+                      properties:
+                        trechoId: { type: string }
+                        documento: { type: string }
+                        versao: { type: string }
+                        localizacao: { type: string }
+                        classificacao: { enum: [oficial, interno] }
+                  limitacoes: { type: array, items: { type: string } }
+    get:
+      summary: Histórico da conversa (somente do próprio usuário)
+      x-papeis: [analista]
+      responses:
+        "200": { description: Mensagens }
+  /api/v1/regras:
+    get:
+      summary: Consulta o Catálogo de Regras carregado (somente leitura)
+      x-papeis: [analista, admin_base]
+      parameters:
+        - { name: status, in: query, schema: { enum: [ativa, pendente_confirmacao, revogada] } }
+      responses:
+        "200": { description: "Regras (catalogo-regras.schema.json#/$defs/regra)" }
+  /api/v1/tabelas-referencia/ncm:
+    post:
+      summary: Importa versão da tabela oficial de NCM (FR-063)
+      x-papeis: [admin_base]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [arquivo, origem, versao, vigenciaInicio]
+              properties:
+                arquivo: { type: string, format: binary }
+                origem: { type: string }
+                versao: { type: string }
+                vigenciaInicio: { type: string, format: date }
+                vigenciaFim: { type: string, format: date }
+      responses:
+        "201": { description: Importada }
+        "409": { description: "Mesma versão já importada (sem duplicidade)" }
+    get:
+      summary: Lista versões importadas
+      x-papeis: [admin_base, analista]
+      responses:
+        "200": { description: Versões }
+  /health/live:
+    get: { security: [], summary: Liveness, responses: { "200": { description: OK } } }
+  /health/ready:
+    get: { security: [], summary: Readiness (MongoDB, PostgreSQL), responses: { "200": { description: OK }, "503": { description: Indisponível } } }
+components:
+  securitySchemes:
+    bearer: { type: http, scheme: bearer, bearerFormat: JWT }
+  responses:
+    Problema:
+      description: Erro no formato RFC 9457 (application/problem+json), com execucaoId quando houver
+      content:
+        application/problem+json:
+          schema:
+            type: object
+            properties:
+              type: { type: string }
+              title: { type: string }
+              status: { type: integer }
+              detail: { type: string }
+              correlacaoId: { type: string }

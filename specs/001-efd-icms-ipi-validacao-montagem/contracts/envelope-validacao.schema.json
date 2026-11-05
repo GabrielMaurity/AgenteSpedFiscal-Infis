@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentespedfiscal/contracts/envelope-validacao/1.0.0",
+  "title": "Envelope de resposta da validação (REST e A2A)",
+  "description": "Preenchido pelo sistema. O campo analiseIa contém somente conteúdo do LLM já validado (llm-analise.schema.json) mais metadados do sistema.",
+  "type": "object",
+  "required": ["versaoContrato", "execucaoId", "correlacaoId", "status", "criadoEm", "etapas", "regrasExecutadas", "validacoesNaoRealizadas", "achados", "totaisPorRegra", "revisaoHumanaNecessaria", "avisoPva"],
+  "additionalProperties": false,
+  "properties": {
+    "versaoContrato": { "const": "1.0.0" },
+    "execucaoId": { "type": "string", "format": "uuid" },
+    "correlacaoId": { "type": "string" },
+    "status": { "enum": ["recebida", "em_processamento", "concluida", "concluida_com_limitacoes", "falha"] },
+    "criadoEm": { "type": "string", "format": "date-time" },
+    "concluidoEm": { "type": ["string", "null"], "format": "date-time" },
+    "duracaoMs": { "type": ["integer", "null"] },
+    "arquivo": {
+      "type": "object",
+      "required": ["nome", "tamanhoBytes", "sha256"],
+      "properties": {
+        "nome": { "type": "string" },
+        "tamanhoBytes": { "type": "integer" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "identificacao": {
+      "type": ["object", "null"],
+      "properties": {
+        "codVer": { "type": "string" },
+        "periodoInicio": { "type": "string", "format": "date" },
+        "periodoFim": { "type": "string", "format": "date" },
+        "codFin": { "type": "string" },
+        "uf": { "type": "string" },
+        "cnpj": { "type": "string" },
+        "indPerfil": { "enum": ["A", "B", "C"] }
+      }
+    },
+    "etapas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["numero", "nome", "status"],
+        "properties": {
+          "numero": { "type": "integer", "minimum": 1, "maximum": 9 },
+          "nome": { "type": "string" },
+          "status": { "enum": ["pendente", "executando", "concluida", "falha", "nao_executada"] },
+          "motivo": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "regrasExecutadas": { "type": "array", "items": { "type": "string" } },
+    "validacoesNaoRealizadas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["referencia", "categoria", "motivo"],
+        "properties": {
+          "referencia": { "type": "string", "description": "regraId ou etapa" },
+          "categoria": { "enum": ["ausencia_evidencias", "falha_tecnica"] },
+          "motivo": { "type": "string" }
+        }
+      }
+    },
+    "achados": { "type": "array", "items": { "$ref": "#/$defs/achado" } },
+    "totaisPorRegra": { "type": "object", "additionalProperties": { "type": "integer" } },
+    "analiseIa": {
+      "type": ["object", "null"],
+      "required": ["status", "modelo", "tentativas"],
+      "properties": {
+        "status": { "enum": ["aceita", "falha"] },
+        "modelo": { "type": "string" },
+        "tentativas": { "type": "integer" },
+        "conteudo": { "description": "Instância de llm-analise.schema.json validada; nulo quando status = falha." },
+        "referencias": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["trechoId", "documento", "versao", "localizacao", "classificacao"],
+            "properties": {
+              "trechoId": { "type": "string" },
+              "documento": { "type": "string" },
+              "versao": { "type": "string" },
+              "localizacao": { "type": "string" },
+              "classificacao": { "enum": ["oficial", "interno"] }
+            }
+          }
+        },
+        "fundamentadaEmFonteOficial": { "type": "boolean", "description": "Calculado pelo sistema a partir das classificações das referências citadas." }
+      }
+    },
+    "revisaoHumanaNecessaria": { "type": "boolean" },
+    "avisoPva": { "const": "Sem achados nas regras implementadas não equivale a conformidade. A validação oficial do PVA permanece obrigatória." },
+    "consumo": {
+      "type": ["object", "null"],
+      "properties": {
+        "tokensEntrada": { "type": ["integer", "null"] },
+        "tokensSaida": { "type": ["integer", "null"] },
+        "custoEstimado": { "type": ["number", "null"] },
+        "moeda": { "type": "string" },
+        "origem": { "enum": ["informado", "estimado", "desconhecido", "parcial"] }
+      }
+    }
+  },
+  "$defs": {
+    "achado": {
+      "type": "object",
+      "required": ["id", "categoria", "severidade", "origem", "mensagem"],
+      "properties": {
+        "id": { "type": "string" },
+        "categoria": { "enum": ["erro_estrutural", "inconsistencia_negocio", "indicio_ia", "ausencia_evidencias", "falha_tecnica"] },
+        "severidade": { "enum": ["impeditiva", "advertencia", "informativa"] },
+        "origem": { "enum": ["validador", "ia"] },
+        "regraId": { "type": ["string", "null"] },
+        "linha": { "type": ["integer", "null"] },
+        "registro": { "type": ["string", "null"] },
+        "campo": { "type": ["string", "null"] },
+        "valorEncontrado": { "type": ["string", "null"] },
+        "valorEsperado": { "type": ["string", "null"] },
+        "mensagem": { "type": "string" },
+        "acaoCorretiva": { "type": ["string", "null"] },
+        "fonte": {
+          "type": ["object", "null"],
+          "properties": {
+            "documento": { "type": "string" },
+            "versao": { "type": "string" },
+            "localizacao": { "type": "string" }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "categoria": { "enum": ["erro_estrutural", "inconsistencia_negocio"] } } },
+          "then": { "properties": { "origem": { "const": "validador" } }, "required": ["regraId", "fonte"] }
+        },
+        {
+          "if": { "properties": { "categoria": { "const": "indicio_ia" } } },
+          "then": { "properties": { "severidade": { "enum": ["advertencia", "informativa"] }, "origem": { "const": "ia" } } }
+        }
+      ]
+    }
+  }
+}

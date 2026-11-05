@@ -1,18 +1,22 @@
 # AgenteSpedFiscal
 
-Agente de IA para **validar**, **explicar** e **produzir** arquivos **SPED Fiscal**, combinando
-validação determinística, consulta a manuais oficiais por RAG, uso controlado de ferramentas e
-análise com LLM, sempre com respostas estruturadas e rastreáveis.
+Agente de IA para **validar** arquivos **SPED Fiscal (EFD ICMS/IPI)** e **responder perguntas**
+sobre eles a partir de uma base de informação classificada. Ele combina validação determinística,
+consulta à base por RAG, uso controlado de ferramentas e análise com LLM, sempre com respostas
+estruturadas e rastreáveis.
 
-> **Status:** fase de especificação. A [constitution](.specify/memory/constitution.md) foi
-> ratificada; ainda não há código de implementação. As funcionalidades serão construídas pelo
-> fluxo de desenvolvimento orientado por especificações (SDD) descrito abaixo.
+> **Status:** fase de planejamento. A [constitution](.specify/memory/constitution.md) (v2.0.0), a
+> [especificação](specs/001-efd-icms-ipi-validacao-montagem/spec.md) e o
+> [plano técnico](specs/001-efd-icms-ipi-validacao-montagem/plan.md) da primeira feature estão
+> prontos; ainda não há código de implementação.
 
 ## Sumário
 
 - [Objetivo](#objetivo)
+- [Fora de escopo](#fora-de-escopo)
 - [Arquitetura](#arquitetura)
 - [Fluxo de validação](#fluxo-de-validação)
+- [Base de informação](#base-de-informação)
 - [Princípios fundamentais](#princípios-fundamentais)
 - [Stack tecnológica](#stack-tecnológica)
 - [Desenvolvimento orientado por especificações](#desenvolvimento-orientado-por-especificações)
@@ -24,13 +28,25 @@ análise com LLM, sempre com respostas estruturadas e rastreáveis.
 
 O AgenteSpedFiscal deve:
 
-- validar arquivos SPED Fiscal quanto a estrutura, registros e regras aplicáveis;
-- responder perguntas sobre SPED Fiscal com base em manuais oficiais, citando as fontes;
-- gerar arquivos SPED Fiscal de forma determinística a partir de dados rastreáveis;
+- validar arquivos EFD ICMS/IPI (`.txt` delimitado por `|`) quanto a estrutura, registros e regras
+  de negócio, apontando linha, registro, campo, regra e fonte oficial de cada achado;
+- explicar os achados e responder perguntas sobre a EFD ICMS/IPI com base na base de informação,
+  citando a fonte e a classificação (oficial ou interna) de cada trecho;
+- entregar o resultado pela API e como relatório CSV de achados;
 - integrar-se a outros agentes e orquestradores por **A2A**.
 
 Layouts, regras fiscais e critérios de conformidade **não são inventados**: são obtidos de
-documentos oficiais e registrados nas especificações de cada funcionalidade.
+documentos oficiais (a começar pelo Guia Prático da EFD-ICMS/IPI 3.2.4) e registrados no Catálogo
+de Regras com documento, versão e localização.
+
+O agente é um **pré-validador**: um resultado sem achados não equivale a conformidade, e a
+validação oficial do PVA continua obrigatória.
+
+## Fora de escopo
+
+- Gerar, montar, corrigir ou reescrever arquivos SPED.
+- Assinar arquivos com certificado digital ou transmiti-los.
+- Outras escriturações (EFD-Contribuições, ECD, ECF).
 
 ## Arquitetura
 
@@ -43,16 +59,15 @@ flowchart LR
 
     subgraph AG[Api.Agente]
         direction TB
-        V[Validadores determinísticos]
+        V[Validadores determinísticos<br/>leiaute + Catálogo de Regras]
         SK[Semantic Kernel<br/>Function Calling]
         SV[Validação da saída estruturada]
     end
 
     AG -->|MCP| RAG
     AG -->|API| OAI[(OpenAI)]
-    AG --> MEM[(MongoDB<br/>memória conversacional)]
-    AG --> PGC[(PostgreSQL<br/>consumo e custos)]
-    AG -->|autorizado| EXT[Ferramentas externas]
+    AG --> MEM[(MongoDB<br/>execuções e conversas)]
+    AG --> PGC[(PostgreSQL<br/>consumo, preços, NCM)]
 
     subgraph RAG[Api.RAG]
         direction TB
@@ -67,8 +82,8 @@ flowchart LR
 
 | Serviço | Responsabilidades |
 |---|---|
-| **Api.Agente** | API REST do agente; recebimento de arquivos; orquestração da validação e da geração; integração com a OpenAI; cliente MCP da Api.RAG; ferramentas via Semantic Kernel; memória conversacional; registro de consumo e custos; validação da resposta estruturada; servidor A2A. |
-| **Api.RAG** | API REST de administração da base de conhecimento; endpoint POST de ingestão; geração de chunks e embeddings; armazenamento e busca vetorial em PostgreSQL com PgVector; servidor MCP com ferramentas de recuperação. |
+| **Api.Agente** | API REST do agente; recebimento de arquivos; orquestração da validação e das consultas; exportação do relatório em CSV; integração com a OpenAI; cliente MCP da Api.RAG; ferramentas via Semantic Kernel; memória conversacional; tabelas de referência (NCM); registro de consumo e custos; validação da resposta estruturada; servidor A2A. |
+| **Api.RAG** | API REST de administração da base de informação; endpoint POST de ingestão; geração de chunks e embeddings; armazenamento e busca híbrida em PostgreSQL com PgVector; servidor MCP com ferramentas de recuperação. |
 
 Regras de fronteira:
 
@@ -86,7 +101,7 @@ Toda validação de documento segue estas etapas, nesta ordem:
 3. Identificar tipo de documento e versão do layout.
 4. Validar estrutura, registros e schema aplicável.
 5. Consultar os chunks do manual correspondente por MCP.
-6. Executar ferramentas externas, quando necessário e autorizado.
+6. Executar ferramentas, quando necessário e autorizado.
 7. Produzir a análise com o LLM.
 8. Validar a saída estruturada.
 9. Retornar o resultado com evidências e rastreabilidade.
@@ -101,7 +116,17 @@ Cada achado é classificado em exatamente uma categoria:
 | Ausência de evidências | Falta de fonte ou dado |
 | Falha técnica / dependência indisponível | Execução |
 
-O agente **nunca declara conformidade** quando alguma validação obrigatória não foi concluída.
+O agente **nunca declara conformidade** quando alguma validação obrigatória não foi concluída. O
+arquivo enviado é descartado ao fim do processamento; hash, metadados e resultado ficam 90 dias.
+
+## Base de informação
+
+- Aceita **documentos oficiais** (Guia Prático, Nota Técnica, atos e legislação) e **material
+  interno da Infis** (procedimentos, perguntas frequentes).
+- Todo documento tem classificação obrigatória `oficial` ou `interno`, além de origem, versão e
+  vigência.
+- As respostas indicam a classificação de cada citação. Material interno nunca é fonte de regra de
+  validação nem é apresentado como norma oficial.
 
 ## Princípios fundamentais
 
@@ -111,6 +136,8 @@ projeto:
 - **Fontes oficiais** — toda regra fiscal referencia documento, versão e localização (P-01).
 - **Determinismo antes do LLM** — o LLM não substitui validadores; XSD só para XML com schema
   oficial (P-02).
+- **Base classificada** — documentos oficiais e internos são distinguidos na ingestão e nas
+  citações (P-09).
 - **Sem fabricação** — referências e resultados de ferramentas citados precisam existir na
   execução (P-13).
 - **Saída estruturada** — contrato JSON versionado e validado; metadados operacionais são
@@ -129,13 +156,14 @@ projeto:
 | Componente | Tecnologia |
 |---|---|
 | Plataforma | .NET 10, ASP.NET Core |
+| Containers | Docker / Docker Compose |
 | LLM e embeddings | OpenAI |
 | Orquestração de ferramentas | Semantic Kernel (Function Calling) |
 | Comunicação Agente ↔ RAG | MCP |
 | Interoperabilidade entre agentes | A2A |
 | Base vetorial | PostgreSQL + PgVector |
-| Consumo e custos | PostgreSQL |
-| Memória conversacional | MongoDB |
+| Consumo, custos e tabelas de referência | PostgreSQL |
+| Execuções e memória conversacional | MongoDB |
 
 Versões de SDKs, modelos e parâmetros ajustáveis são definidos nos planos técnicos, não aqui.
 
@@ -173,20 +201,26 @@ requisito → tarefa → teste. Decisões arquiteturais relevantes são registra
 │   ├── scripts/powershell/  # Scripts de apoio do Spec Kit
 │   ├── templates/           # Templates de spec, plano, tarefas e checklist
 │   └── workflows/           # Definição do fluxo SDD
+├── specs/
+│   └── 001-efd-icms-ipi-validacao-montagem/   # spec, plano, pesquisa, modelo e contratos
 └── README.md
 ```
 
-Os projetos `Api.Agente`, `Api.RAG` e as pastas `docs/adr/` e `docs/desvios/` serão criados
-conforme as especificações e planos técnicos.
+Os projetos `Api.Agente`, `Api.RAG`, o `docker-compose.yml` e as pastas `docs/adr/` e
+`docs/desvios/` serão criados conforme o [plano técnico](specs/001-efd-icms-ipi-validacao-montagem/plan.md).
 
 ## Decisões pendentes
 
 A seção 9 da [constitution](.specify/memory/constitution.md#9-decisões-pendentes) lista as
-decisões ainda em aberto (modelos da OpenAI, fontes oficiais e versões suportadas, escopo da
-geração de SPED, autenticação, retenção de dados, parâmetros de RAG, entre outras), com a etapa em
-que cada uma deve ser resolvida. Nenhuma delas é requisito aprovado.
+decisões ainda em aberto (modelos da OpenAI, autenticação, parâmetros de RAG, retenção de memória
+e logs, entre outras), com a etapa em que cada uma deve ser resolvida. Nenhuma delas é requisito
+aprovado.
 
-Decisão já resolvida: **D-01 — memória conversacional em MongoDB** (ADR de registro pendente).
+Já resolvidas: D-01 (MongoDB), D-03 (EFD ICMS/IPI, leiaute vigente a partir de 01/2026), D-04
+(geração fora do escopo), D-05 (`.txt` até 500 MB), D-10 (severidades) e D-14 (descarte do
+arquivo).
+
+Fontes oficiais recebidas: Guia Prático 3.2.4 e NT 2026.001 v1.0 (Tabela Versão do Leiaute).
 
 ## Contribuição
 

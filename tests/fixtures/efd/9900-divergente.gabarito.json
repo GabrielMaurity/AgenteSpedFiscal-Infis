@@ -1,0 +1,11 @@
+{
+  "status": "valido",
+  "achados": [
+    {
+      "regraId": "EFD-ESTR-016",
+      "registro": "9900",
+      "linha": 41,
+      "campo": "QTD_REG_BLC"
+    }
+  ]
+}

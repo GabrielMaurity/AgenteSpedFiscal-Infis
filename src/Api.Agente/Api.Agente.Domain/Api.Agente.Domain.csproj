@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <EmbeddedResource Include="Efd\Dados\*.json" LogicalName="%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

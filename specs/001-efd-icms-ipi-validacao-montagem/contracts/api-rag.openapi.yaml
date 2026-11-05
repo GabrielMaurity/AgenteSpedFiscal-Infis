@@ -1,0 +1,77 @@
+openapi: 3.1.0
+info:
+  title: Api.RAG — AgenteSpedFiscal (administração da base)
+  version: 1.0.0
+  description: >
+    Administração da base de informação (documentos oficiais e material interno da Infis, com
+    classificação obrigatória). Uso exclusivo de administradores (papel admin_base).
+    A recuperação funcional pela Api.Agente ocorre somente por MCP (mcp-api-rag.md), nunca por estes endpoints.
+servers:
+  - url: http://localhost:8081
+security:
+  - bearer: []
+paths:
+  /api/v1/documentos:
+    post:
+      summary: Ingestão de documento oficial ou material interno (FR-060, FR-061)
+      x-papeis: [admin_base]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [arquivo, classificacao, tipoDocumento, titulo, origem, versao]
+              properties:
+                arquivo: { type: string, format: binary, description: "PDF, Markdown ou texto" }
+                classificacao: { enum: [oficial, interno], description: "Obrigatória e imutável após a ingestão" }
+                tipoDocumento: { enum: [guia_pratico_efd_icms_ipi, nota_tecnica_leiaute, ato_cotepe, legislacao, outro_oficial, material_interno] }
+                titulo: { type: string }
+                origem: { type: string, description: "Órgão emissor e URL de obtenção" }
+                versao: { type: string }
+                vigenciaInicio: { type: string, format: date }
+                vigenciaFim: { type: string, format: date }
+      responses:
+        "202": { description: "Ingestão iniciada (documentoId, status = recebido)" }
+        "400": { description: "Metadados obrigatórios ausentes, classificação ausente, ou classificacao = interno com tipoDocumento oficial (e vice-versa)" }
+        "409": { description: "Documento idêntico já ingerido (sha256)" }
+    get:
+      summary: Lista documentos
+      x-papeis: [admin_base]
+      parameters:
+        - { name: tipoDocumento, in: query, schema: { type: string } }
+        - { name: classificacao, in: query, schema: { enum: [oficial, interno] } }
+        - { name: status, in: query, schema: { enum: [recebido, processando, ativo, falha, inativo] } }
+      responses:
+        "200": { description: Documentos }
+  /api/v1/documentos/{documentoId}:
+    parameters:
+      - { name: documentoId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      summary: Detalhe e status do processamento
+      x-papeis: [admin_base]
+      responses:
+        "200": { description: Documento com contagem de trechos }
+  /api/v1/documentos/{documentoId}/reprocessar:
+    post:
+      summary: Reprocessa segmentação e embeddings sem duplicar trechos
+      x-papeis: [admin_base]
+      parameters:
+        - { name: documentoId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "202": { description: Reprocessamento iniciado }
+  /api/v1/documentos/{documentoId}/desativar:
+    post:
+      summary: Desativa a versão (deixa de ser recuperada; histórico mantido)
+      x-papeis: [admin_base]
+      parameters:
+        - { name: documentoId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: Desativado }
+  /health/live:
+    get: { security: [], summary: Liveness, responses: { "200": { description: OK } } }
+  /health/ready:
+    get: { security: [], summary: Readiness (PostgreSQL), responses: { "200": { description: OK }, "503": { description: Indisponível } } }
+components:
+  securitySchemes:
+    bearer: { type: http, scheme: bearer, bearerFormat: JWT }

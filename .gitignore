@@ -28,6 +28,7 @@ coverage*.xml
 # Segredos e configuração local (P-19: segredos não são versionados)
 .env
 .env.*
+!.env.example
 appsettings.*.local.json
 appsettings.Development.json
 secrets.json

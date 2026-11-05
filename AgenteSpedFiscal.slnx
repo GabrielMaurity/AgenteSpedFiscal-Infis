@@ -1,0 +1,27 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Api.Agente/">
+    <Project Path="src/Api.Agente/Api.Agente.Application/Api.Agente.Application.csproj" />
+    <Project Path="src/Api.Agente/Api.Agente.Domain/Api.Agente.Domain.csproj" />
+    <Project Path="src/Api.Agente/Api.Agente.Endpoints/Api.Agente.Endpoints.csproj" />
+    <Project Path="src/Api.Agente/Api.Agente.Infrastructure/Api.Agente.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Api.Rag/">
+    <Project Path="src/Api.Rag/Api.Rag.Application/Api.Rag.Application.csproj" />
+    <Project Path="src/Api.Rag/Api.Rag.Domain/Api.Rag.Domain.csproj" />
+    <Project Path="src/Api.Rag/Api.Rag.Endpoints/Api.Rag.Endpoints.csproj" />
+    <Project Path="src/Api.Rag/Api.Rag.Infrastructure/Api.Rag.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Shared/">
+    <Project Path="src/Shared/AgenteSpedFiscal.Contracts.Mcp/AgenteSpedFiscal.Contracts.Mcp.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AgenteSpedFiscal.Evals/AgenteSpedFiscal.Evals.csproj" />
+    <Project Path="tests/Api.Agente.Application.Tests/Api.Agente.Application.Tests.csproj" />
+    <Project Path="tests/Api.Agente.Domain.Tests/Api.Agente.Domain.Tests.csproj" />
+    <Project Path="tests/Api.Agente.Integration.Tests/Api.Agente.Integration.Tests.csproj" />
+    <Project Path="tests/Api.Rag.Tests/Api.Rag.Tests.csproj" />
+    <Project Path="tests/Architecture.Tests/Architecture.Tests.csproj" />
+    <Project Path="tests/Contracts.Tests/Contracts.Tests.csproj" />
+  </Folder>
+</Solution>

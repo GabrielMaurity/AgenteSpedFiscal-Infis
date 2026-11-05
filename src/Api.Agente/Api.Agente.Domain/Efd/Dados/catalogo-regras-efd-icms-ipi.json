@@ -1,0 +1,189 @@
+{
+  "versaoCatalogo": "1.0.0",
+  "fontesOficiais": [
+    { "documento": "Guia Prático da EFD-ICMS/IPI", "versao": "3.2.4", "ato": "Ato COTEPE/ICMS nº 44/2018" },
+    { "documento": "Nota Técnica EFD ICMS IPI 2026.001", "versao": "1.0", "ato": "Ato COTEPE/ICMS nº 44/2018" }
+  ],
+  "regras": [
+    {
+      "id": "EFD-ESTR-001",
+      "descricao": "Toda linha inicia e termina com o delimitador pipe.",
+      "tipo": "estrutural",
+      "severidade": "impeditiva",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Nota Técnica EFD ICMS IPI 2026.001", "versao": "1.0", "localizacao": "Item 2.1.1, alínea e" },
+      "acaoCorretiva": "Gerar a linha com o caractere | no início do registro e ao final de cada campo."
+    },
+    {
+      "id": "EFD-ESTR-002",
+      "descricao": "Toda linha termina com CR e LF.",
+      "tipo": "estrutural",
+      "severidade": "impeditiva",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Nota Técnica EFD ICMS IPI 2026.001", "versao": "1.0", "localizacao": "Item 2.1.1, alínea g" },
+      "acaoCorretiva": "Gerar o arquivo com os caracteres CR e LF no fim de cada linha."
+    },
+    {
+      "id": "EFD-ESTR-003",
+      "descricao": "O registro existe no leiaute da versão.",
+      "tipo": "estrutural",
+      "severidade": "impeditiva",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Nota Técnica EFD ICMS IPI 2026.001", "versao": "1.0", "localizacao": "Item 2.6.1, Tabela Registros" },
+      "acaoCorretiva": "Remover o registro ou corrigir o código do registro."
+    },
+    {
+      "id": "EFD-ESTR-004",
+      "descricao": "O registro apresenta todos os campos previstos no leiaute.",
+      "tipo": "estrutural",
+      "severidade": "impeditiva",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Guia Prático da EFD-ICMS/IPI", "versao": "3.2.4", "localizacao": "Cap. II, Seção 1, p. 7" },
+      "acaoCorretiva": "Informar todos os campos do registro, mesmo vazios."
+    },
+    {
+      "id": "EFD-ESTR-005",
+      "descricao": "Campo obrigatório está preenchido.",
+      "tipo": "estrutural",
+      "severidade": "impeditiva",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Guia Prático da EFD-ICMS/IPI", "versao": "3.2.4", "localizacao": "Cap. III, coluna de obrigatoriedade de cada registro" },
+      "acaoCorretiva": "Preencher o campo obrigatório."
+    },
+    {
+      "id": "EFD-ESTR-006",
+      "descricao": "Campo numérico contém apenas algarismos e, se houver, vírgula decimal.",
+      "tipo": "estrutural",
+      "severidade": "impeditiva",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Nota Técnica EFD ICMS IPI 2026.001", "versao": "1.0", "localizacao": "Itens 2.2.1, alínea b, e 2.2.4, alínea a" },
+      "acaoCorretiva": "Informar o valor sem separador de milhar, sinal ou outros caracteres, usando vírgula como separador decimal."
+    },
+    {
+      "id": "EFD-ESTR-007",
+      "descricao": "Campo alfanumérico não contém caracteres não imprimíveis.",
+      "tipo": "estrutural",
+      "severidade": "impeditiva",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Nota Técnica EFD ICMS IPI 2026.001", "versao": "1.0", "localizacao": "Item 2.2.1, alínea a" },
+      "acaoCorretiva": "Remover os caracteres de 00 a 31 da Tabela ASCII do campo."
+    },
+    {
+      "id": "EFD-ESTR-008",
+      "descricao": "O conteúdo do campo respeita o tamanho do leiaute.",
+      "tipo": "estrutural",
+      "severidade": "impeditiva",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Nota Técnica EFD ICMS IPI 2026.001", "versao": "1.0", "localizacao": "Itens 2.2.3 e 2.7.1, Tabela Campos" },
+      "acaoCorretiva": "Ajustar o conteúdo ao tamanho previsto para o campo."
+    },
+    {
+      "id": "EFD-ESTR-009",
+      "descricao": "O campo numérico respeita a quantidade máxima de casas decimais.",
+      "tipo": "estrutural",
+      "severidade": "impeditiva",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Nota Técnica EFD ICMS IPI 2026.001", "versao": "1.0", "localizacao": "Itens 2.2.4, alínea c, e 2.7.1, Tabela Campos" },
+      "acaoCorretiva": "Ajustar a quantidade de casas decimais do campo."
+    },
+    {
+      "id": "EFD-ESTR-010",
+      "descricao": "Os blocos aparecem na sequência do leiaute.",
+      "tipo": "estrutural",
+      "severidade": "impeditiva",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Guia Prático da EFD-ICMS/IPI", "versao": "3.2.4", "localizacao": "Cap. II, Seção 1, p. 7" },
+      "acaoCorretiva": "Gerar os blocos na sequência 0, B, C, D, E, G, H, K, 1 e 9."
+    },
+    {
+      "id": "EFD-ESTR-011",
+      "descricao": "Todo bloco tem registro de abertura e de encerramento, mesmo sem movimento.",
+      "tipo": "estrutural",
+      "severidade": "impeditiva",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Guia Prático da EFD-ICMS/IPI", "versao": "3.2.4", "localizacao": "Cap. II, Seção 1, p. 7" },
+      "acaoCorretiva": "Gerar a abertura e o encerramento de todos os blocos, inclusive os vazios."
+    },
+    {
+      "id": "EFD-ESTR-012",
+      "descricao": "Registro filho só existe com o registro pai correspondente.",
+      "tipo": "estrutural",
+      "severidade": "impeditiva",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Guia Prático da EFD-ICMS/IPI", "versao": "3.2.4", "localizacao": "Cap. II, Seção 1, p. 7-8" },
+      "acaoCorretiva": "Incluir o registro pai antes do registro filho."
+    },
+    {
+      "id": "EFD-ESTR-013",
+      "descricao": "Registro com ocorrência única não se repete para o mesmo pai.",
+      "tipo": "estrutural",
+      "severidade": "impeditiva",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Guia Prático da EFD-ICMS/IPI", "versao": "3.2.4", "localizacao": "Cap. II, Seção 1, p. 8" },
+      "acaoCorretiva": "Manter um único registro para o respectivo registro pai."
+    },
+    {
+      "id": "EFD-ESTR-014",
+      "descricao": "Bloco declarado sem dados não contém registros além da abertura e do encerramento.",
+      "tipo": "estrutural",
+      "severidade": "impeditiva",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Guia Prático da EFD-ICMS/IPI", "versao": "3.2.4", "localizacao": "Campo indicador de movimento dos registros de abertura (ex.: registro 0001, p. 31)" },
+      "acaoCorretiva": "Corrigir o indicador de movimento ou remover os registros do bloco."
+    },
+    {
+      "id": "EFD-ESTR-015",
+      "descricao": "O encerramento do bloco informa a quantidade real de linhas do bloco.",
+      "tipo": "estrutural",
+      "severidade": "impeditiva",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Guia Prático da EFD-ICMS/IPI", "versao": "3.2.4", "localizacao": "Campo de quantidade de linhas dos registros de encerramento (ex.: registro C990, p. 173)" },
+      "acaoCorretiva": "Informar a quantidade de linhas do bloco, incluindo abertura e encerramento."
+    },
+    {
+      "id": "EFD-ESTR-016",
+      "descricao": "O registro 9900 totaliza a quantidade real de cada tipo de registro.",
+      "tipo": "estrutural",
+      "severidade": "impeditiva",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Guia Prático da EFD-ICMS/IPI", "versao": "3.2.4", "localizacao": "Registro 9900, campo QTD_REG_BLC, p. 325" },
+      "acaoCorretiva": "Informar uma linha 9900 por tipo de registro, com a quantidade real."
+    },
+    {
+      "id": "EFD-ESTR-017",
+      "descricao": "O registro 9999 informa a quantidade total de linhas do arquivo.",
+      "tipo": "estrutural",
+      "severidade": "impeditiva",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Guia Prático da EFD-ICMS/IPI", "versao": "3.2.4", "localizacao": "Registro 9999, campo QTD_LIN, p. 326" },
+      "acaoCorretiva": "Informar a quantidade total de linhas, considerando também o próprio registro 9999."
+    },
+    {
+      "id": "EFD-ESTR-018",
+      "descricao": "O arquivo começa no registro 0000 e termina no registro 9999.",
+      "tipo": "estrutural",
+      "severidade": "impeditiva",
+      "status": "ativa",
+      "aplicacao": { "codVer": ["020"], "periodoInicio": "2026-01", "periodoFim": "2026-12" },
+      "fonte": { "documento": "Nota Técnica EFD ICMS IPI 2026.001", "versao": "1.0", "localizacao": "Item 1.1" },
+      "acaoCorretiva": "Gerar o registro 0000 como primeira linha e o registro 9999 como última."
+    }
+  ]
+}

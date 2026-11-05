@@ -1,0 +1,7 @@
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.pdf binary
+*.png binary
+
+# Fixtures EFD: CR e LF fazem parte do formato validado (NT 2026.001, item 2.1.1).
+tests/fixtures/efd/*.txt -text

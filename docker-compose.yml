@@ -1,0 +1,93 @@
+# Ambiente de desenvolvimento. Cada API recebe somente a própria connection string (P-07).
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_ROOT_PASSWORD:?defina no .env}
+      POSTGRES_AGENTE_PASSWORD: ${POSTGRES_AGENTE_PASSWORD:?defina no .env}
+      POSTGRES_RAG_PASSWORD: ${POSTGRES_RAG_PASSWORD:?defina no .env}
+    volumes:
+      - postgres-dados:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d rag"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  mongo:
+    image: mongo:8.0
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:?defina no .env}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?defina no .env}
+    volumes:
+      - mongo-dados:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:9.5
+    environment:
+      DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
+    ports:
+      - "18888:18888"
+
+  api-rag:
+    build:
+      context: .
+      dockerfile: src/Api.Rag/Api.Rag.Endpoints/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Postgres__ConnectionString: Host=postgres;Database=rag;Username=rag;Password=${POSTGRES_RAG_PASSWORD}
+      Persistencia__AplicarMigracoesNaInicializacao: "true"
+      OpenAi__ApiKey: ${OPENAI_API_KEY:?defina no .env}
+      Authentication__Schemes__Bearer__ValidIssuer: ${JWT_ISSUER}
+      Authentication__Schemes__Bearer__ValidAudiences__0: api-rag
+      Authentication__Schemes__Bearer__SigningKeys__0__Issuer: ${JWT_ISSUER}
+      Authentication__Schemes__Bearer__SigningKeys__0__Value: ${JWT_SIGNING_KEY_BASE64:?defina no .env}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://aspire-dashboard:18889
+      OTEL_SERVICE_NAME: api-rag
+    ports:
+      - "8081:8081"
+
+  api-agente:
+    build:
+      context: .
+      dockerfile: src/Api.Agente/Api.Agente.Endpoints/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Postgres__ConnectionString: Host=postgres;Database=agente;Username=agente;Password=${POSTGRES_AGENTE_PASSWORD}
+      MongoDb__ConnectionString: mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongo:27017/?authSource=admin
+      MongoDb__Database: agente
+      Persistencia__AplicarMigracoesNaInicializacao: "true"
+      McpRag__Url: http://api-rag:8081/mcp
+      OpenAi__ApiKey: ${OPENAI_API_KEY:?defina no .env}
+      OpenAi__ModeloAnalise: ${OPENAI_MODELO_ANALISE:?defina no .env}
+      Arquivos__DiretorioTemporario: /var/tmp/uploads
+      A2a__UrlBase: http://localhost:8080
+      Authentication__Schemes__Bearer__ValidIssuer: ${JWT_ISSUER}
+      Authentication__Schemes__Bearer__ValidAudiences__0: api-agente
+      Authentication__Schemes__Bearer__SigningKeys__0__Issuer: ${JWT_ISSUER}
+      Authentication__Schemes__Bearer__SigningKeys__0__Value: ${JWT_SIGNING_KEY_BASE64:?defina no .env}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://aspire-dashboard:18889
+      OTEL_SERVICE_NAME: api-agente
+    volumes:
+      - uploads-temporarios:/var/tmp/uploads
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres-dados:
+  mongo-dados:
+  uploads-temporarios:

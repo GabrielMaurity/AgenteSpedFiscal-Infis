@@ -1,0 +1,11 @@
+{
+  "status": "valido",
+  "achados": [
+    {
+      "regraId": "EFD-ESTR-007",
+      "registro": "0190",
+      "linha": 6,
+      "campo": "DESCR"
+    }
+  ]
+}

@@ -12,10 +12,10 @@ NÃO DEVE é verificável em revisão de pull request (PR).
 O AgenteSpedFiscal é um agente de IA que:
 
 - valida arquivos SPED Fiscal quanto a estrutura, registros e regras aplicáveis;
-- responde a perguntas e traz informações fundamentadas sobre SPED Fiscal;
-- produz arquivos SPED Fiscal a partir de dados de entrada rastreáveis.
+- responde a perguntas e traz informações fundamentadas sobre SPED Fiscal a partir de uma base de
+  informação com documentos oficiais e material interno, sempre classificados.
 
-A solução combina validação determinística, consulta a manuais oficiais por RAG, uso controlado
+A solução combina validação determinística, consulta à base de informação por RAG, uso controlado
 de ferramentas externas, análise com LLM e respostas estruturadas e rastreáveis, com integração
 futura a outros agentes e orquestradores por A2A.
 
@@ -34,6 +34,9 @@ futura a outros agentes e orquestradores por A2A.
   (ver P-01).
 - O agente NÃO substitui a responsabilidade legal do contribuinte ou do profissional contábil.
   Resultados DEVEM indicar quando revisão humana é necessária (ver P-11).
+- O agente NÃO DEVE gerar, montar, corrigir ou reescrever arquivos SPED Fiscal, nem assinar ou
+  transmitir arquivos. Incluir geração no escopo exige emenda MAJOR desta constitution com novo
+  princípio próprio.
 
 ## 2. Princípios obrigatórios
 
@@ -53,7 +56,7 @@ Cada princípio apresenta **Regra**, **Justificativa** e **Verificação**.
 **Justificativa**: erros fiscais têm consequência legal e financeira; regras sem fonte não são
 auditáveis.
 
-**Verificação**: em PR, toda regra de validação ou geração nova ou alterada possui referência à
+**Verificação**: em PR, toda regra de validação nova ou alterada possui referência à
 fonte oficial na especificação; ausência de referência bloqueia a aprovação.
 
 ### P-02 — Validação determinística antes do LLM
@@ -139,21 +142,10 @@ contexto oficial correto.
 cobrem o fluxo completo e a interrupção nas etapas 1 a 4; os registros de execução exibem cada
 etapa com o mesmo identificador de execução.
 
-### P-06 — Geração determinística de arquivos SPED
+### P-06 — (Revogado na versão 2.0.0)
 
-**Regra**
-
-- Arquivos SPED Fiscal produzidos pelo agente DEVEM ser gerados por componente determinístico a
-  partir de dados de entrada identificados e rastreáveis.
-- O LLM NÃO DEVE inventar valores fiscais, registros ou totais de um arquivo gerado. O LLM PODE
-  auxiliar na interpretação da solicitação e na explicação do resultado.
-- Todo arquivo gerado DEVE ser submetido às mesmas validações determinísticas do fluxo P-05
-  antes da entrega, e o resultado dessas validações DEVE acompanhar o arquivo.
-
-**Justificativa**: um arquivo fiscal gerado precisa ser reprodutível e auditável.
-
-**Verificação**: testes demonstram que a mesma entrada gera o mesmo arquivo; testes confirmam que
-nenhum arquivo é entregue sem o resultado da validação.
+Princípio de geração determinística de arquivos SPED revogado: a geração saiu do escopo do agente
+(seção 1.3). O número é mantido para não alterar as referências P-07 a P-22 nas especificações.
 
 ### P-07 — Fronteiras de serviço e propriedade dos dados
 
@@ -164,7 +156,7 @@ nenhum arquivo é entregue sem o resultado da validação.
 - Cada serviço DEVE ser proprietário exclusivo dos seus dados.
 - `Api.Agente` NÃO DEVE acessar diretamente tabelas, vetores, credenciais ou armazenamento interno
   da `Api.RAG`, nem o inverso.
-- Os endpoints REST da `Api.RAG` destinam-se à administração da base de conhecimento e NÃO DEVEM
+- Os endpoints REST da `Api.RAG` destinam-se à administração da base de informação e NÃO DEVEM
   ser usados pela `Api.Agente` para recuperação funcional de conhecimento.
 
 **Justificativa**: preserva autonomia, evolução independente e contratos explícitos entre
@@ -189,27 +181,33 @@ necessidade.
 **Verificação**: as referências entre projetos respeitam a direção de dependência; todo projeto
 ou pacote novo em PR tem justificativa rastreável.
 
-### P-09 — Conhecimento oficial rastreável e versionado
+### P-09 — Base de informação classificada, rastreável e versionada
 
 **Regra**
 
-- Todo documento ingerido DEVE possuir origem, identificação, versão e data de ingestão.
-- Todo chunk DEVE permitir recuperar documento de origem, versão e localização (seção, página ou
-  registro), quando disponível.
+- Todo documento ingerido DEVE possuir classificação (`oficial` ou `interno`), origem,
+  identificação, versão e data de ingestão. Documentos sem classificação DEVEM ser recusados.
+- Material interno NÃO DEVE ser usado como fonte de regra de validação (P-01) nem apresentado como
+  norma ou fonte oficial.
+- Todo chunk DEVE permitir recuperar documento de origem, classificação, versão e localização
+  (seção, página ou registro), quando disponível.
 - A ingestão DEVE definir critérios de segmentação, deduplicação, reprocessamento e atualização,
   registrados na especificação ou no plano técnico.
 - A recuperação DEVE filtrar pelo tipo de documento e pela versão do manual aplicável ao arquivo
   analisado.
-- Respostas fundamentadas no RAG DEVEM apresentar referências recuperáveis aos chunks utilizados.
+- Respostas fundamentadas no RAG DEVEM apresentar referências recuperáveis aos chunks utilizados,
+  com a classificação de cada uma. Uma resposta apoiada apenas em material interno DEVE declarar
+  que não há fundamento em fonte oficial recuperada.
 - Na ausência de evidências suficientes, o agente DEVE declarar a limitação (categoria 4 de P-03),
   e NÃO DEVE responder como se houvesse fundamentação.
 
 **Justificativa**: manuais fiscais mudam entre versões; usar a versão errada produz conclusões
-erradas.
+erradas. Material interno é útil, mas confundi-lo com norma oficial gera risco fiscal.
 
-**Verificação**: o modelo de dados do chunk contém os metadados exigidos; testes confirmam o
-filtro por tipo e versão; testes confirmam que toda referência retornada corresponde a um chunk
-existente.
+**Verificação**: o modelo de dados do documento e do chunk contém os metadados exigidos, incluindo
+a classificação; testes confirmam o filtro por tipo e versão, a recusa de ingestão sem
+classificação e a sinalização de citações internas; testes confirmam que toda referência
+retornada corresponde a um chunk existente.
 
 ### P-10 — Parâmetros de RAG especificados e avaliados
 
@@ -425,7 +423,7 @@ está completa para a funcionalidade.
 
 **Regra**
 
-- Validadores, geradores, ferramentas, contratos (REST, MCP, A2A, saída do LLM) e regras de
+- Validadores, ferramentas, contratos (REST, MCP, A2A, saída do LLM) e regras de
   segurança DEVEM ter testes automatizados.
 - Regras fiscais DEVEM ter testes com exemplos positivos e negativos derivados da fonte oficial.
 - Testes que dependam de LLM ou provedores externos DEVEM ser isolados de testes determinísticos;
@@ -458,7 +456,7 @@ Responsabilidades obrigatórias:
 
 - API REST para execução do agente;
 - recebimento de arquivos e solicitações de análise;
-- orquestração do fluxo de validação (P-05) e geração (P-06);
+- orquestração do fluxo de validação (P-05) e das consultas à base de informação;
 - integração com a OpenAI;
 - consulta à `Api.RAG` como cliente MCP;
 - execução de ferramentas por Semantic Kernel (P-15);
@@ -471,7 +469,8 @@ Responsabilidades obrigatórias:
 
 Responsabilidades obrigatórias:
 
-- API REST para administração da base de conhecimento;
+- API REST para administração da base de informação (documentos oficiais e material interno,
+  com classificação obrigatória, P-09);
 - endpoint POST de ingestão;
 - processamento de documentos, geração de chunks e embeddings;
 - armazenamento e consulta de vetores em PostgreSQL com PgVector;
@@ -495,7 +494,7 @@ Os seguintes contratos DEVEM ser explícitos, versionados e cobertos por testes 
 
 | Contrato | Proprietário | Conteúdo mínimo |
 |---|---|---|
-| API REST da `Api.Agente` | Api.Agente | requisição de análise/geração; envelope de resposta |
+| API REST da `Api.Agente` | Api.Agente | requisição de validação e de consulta; envelope de resposta |
 | Envelope de resposta | Api.Agente | metadados do sistema (P-12) + resultado do LLM validado |
 | Resposta do LLM | Api.Agente | campos de P-11 |
 | Ferramentas MCP da `Api.RAG` | Api.RAG | consulta filtrável por tipo/versão; chunks com referência |
@@ -513,10 +512,11 @@ Os seguintes contratos DEVEM ser explícitos, versionados e cobertos por testes 
 ### 4.3 Dados
 
 - Cada serviço DEVE ser proprietário dos seus bancos, schemas e vetores (P-07).
-- Documentos oficiais, chunks, histórico conversacional, registros de consumo e arquivos enviados
-  DEVEM ter política de retenção definida em especificação (D-08).
+- Documentos da base de informação, chunks, histórico conversacional, registros de consumo,
+  resultados de validação e arquivos enviados DEVEM ter política de retenção definida em
+  especificação ou plano técnico (D-08).
 - Arquivos fiscais e dados pessoais DEVEM ser tratados conforme a LGPD e a seção 5.
-- Base oficial de conhecimento e histórico conversacional DEVEM permanecer separados (P-16).
+- Base de informação e histórico conversacional DEVEM permanecer separados (P-16).
 - Alterações de schema de dados DEVEM ser versionadas por migrações.
 
 ## 5. Segurança e qualidade
@@ -584,7 +584,7 @@ validação**
 
 Todo PR DEVE ser revisado quanto a:
 
-- conformidade com os princípios P-01 a P-22 aplicáveis;
+- conformidade com os princípios P-01 a P-22 aplicáveis (P-06 revogado);
 - rastreabilidade com especificação e tarefas;
 - itens da Definition of Done (seção 7);
 - existência de desvio aprovado para qualquer regra não cumprida.
@@ -654,18 +654,18 @@ Itens abaixo NÃO são requisitos aprovados. Cada um DEVE ser resolvido na etapa
 |---|---|---|
 | D-01 | ~~MongoDB ou Redis para memória conversacional~~ **Resolvida em 1.1.0: MongoDB** | ADR de registro antes da implementação |
 | D-02 | Modelos da OpenAI para análise e embeddings; dimensão dos vetores | Plano técnico + ADR |
-| D-03 | Inventário de fontes oficiais, tipos de SPED e versões de layout suportados | Especificação + esclarecimentos |
-| D-04 | Escopo da produção de SPED Fiscal: dados de entrada, blocos e registros gerados | Especificação + esclarecimentos |
-| D-05 | Limites de tamanho, formatos e codificações aceitos | Especificação |
+| D-03 | ~~Inventário de fontes oficiais, tipos de SPED e versões de layout suportados~~ **Resolvida na spec 001: EFD ICMS/IPI, leiaute vigente, períodos a partir de 01/2026; Guia Prático 3.2.4 recebido; Nota Técnica do Ato COTEPE/ICMS nº 44/2018 pendente de obtenção** | Novas versões por especificação |
+| D-04 | ~~Escopo da produção de SPED Fiscal~~ **Resolvida em 2.0.0: geração fora do escopo (seção 1.3)** | — |
+| D-05 | ~~Limites de tamanho, formatos e codificações aceitos~~ **Resolvida na spec 001: `.txt` delimitado por pipe, até 500 MB configurável; codificação conforme Nota Técnica** | — |
 | D-06 | Segmentação, sobreposição, topK, limiares e estratégia de busca | Plano técnico, após avaliação (P-10) |
 | D-07 | Autenticação e autorização (clientes, REST, MCP, A2A) e multi-organização | ADR antes da primeira API exposta |
-| D-08 | Retenção, expiração e exclusão de arquivos, memória, logs e consumo | Especificação, com avaliação LGPD |
-| D-09 | Catálogo de ferramentas externas e efeitos colaterais | Especificação de cada funcionalidade |
-| D-10 | Taxonomia de severidades e critérios de revisão humana | Especificação |
+| D-08 | Retenção, expiração e exclusão de arquivos, memória, logs e consumo. **Parcial (spec 001): arquivo descartado ao fim do processamento; hash, metadados e resultado por 90 dias com exclusão sob demanda.** Pendentes: memória, logs e consumo | Plano técnico, com avaliação LGPD |
+| D-09 | Catálogo de ferramentas externas e efeitos colaterais. **Spec 001: somente ferramentas de leitura, sem consulta externa durante a validação** | Especificação de cada funcionalidade |
+| D-10 | ~~Taxonomia de severidades e critérios de revisão humana~~ **Resolvida na spec 001: impeditiva, advertência e informativa; critérios de revisão humana no FR-046** | — |
 | D-11 | Consolidação do consumo de embeddings da Api.RAG com a Api.Agente | Plano técnico + ADR |
 | D-12 | Fonte e atualização da tabela de preços | Plano técnico |
 | D-13 | Limites de retentativa e timeouts | Plano técnico |
-| D-14 | Armazenamento ou descarte dos arquivos enviados e gerados | Especificação |
+| D-14 | ~~Armazenamento ou descarte dos arquivos enviados~~ **Resolvida na spec 001: descarte ao fim do processamento** | — |
 | D-15 | Versão do protocolo A2A, capacidades anunciadas e autenticação | Plano técnico + ADR |
 | D-16 | Transporte e versão do protocolo MCP | Plano técnico + ADR |
 | D-17 | Separação física dos dados PostgreSQL entre serviços | ADR |
@@ -673,4 +673,4 @@ Itens abaixo NÃO são requisitos aprovados. Cada um DEVE ser resolvido na etapa
 | D-19 | Frameworks de testes e de avaliação de LLM/RAG | Plano técnico |
 | D-20 | Papéis responsáveis por aprovar alterações e desvios | Governança, antes da primeira emenda |
 
-**Version**: 1.1.0 | **Ratified**: 2026-10-29 | **Last Amended**: 2026-10-29
+**Version**: 2.0.0 | **Ratified**: 2026-10-29 | **Last Amended**: 2026-10-29

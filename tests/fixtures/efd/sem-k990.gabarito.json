@@ -1,0 +1,11 @@
+{
+  "status": "valido",
+  "achados": [
+    {
+      "regraId": "EFD-ESTR-011",
+      "registro": "K990",
+      "linha": null,
+      "campo": null
+    }
+  ]
+}
