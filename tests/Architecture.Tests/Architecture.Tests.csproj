@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="NetArchTest.Rules" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Api.Agente/Api.Agente.Domain/Api.Agente.Domain.csproj" />
+    <ProjectReference Include="../../src/Api.Agente/Api.Agente.Application/Api.Agente.Application.csproj" />
+    <ProjectReference Include="../../src/Api.Agente/Api.Agente.Infrastructure/Api.Agente.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/Api.Rag/Api.Rag.Domain/Api.Rag.Domain.csproj" />
+    <ProjectReference Include="../../src/Api.Rag/Api.Rag.Application/Api.Rag.Application.csproj" />
+    <ProjectReference Include="../../src/Api.Rag/Api.Rag.Infrastructure/Api.Rag.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

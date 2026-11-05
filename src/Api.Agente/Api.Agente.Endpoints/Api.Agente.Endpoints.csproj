@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <UserSecretsId>agentespedfiscal-api-agente</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="A2A.AspNetCore" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Api.Agente.Application\Api.Agente.Application.csproj" />
+    <ProjectReference Include="..\Api.Agente.Infrastructure\Api.Agente.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Api.Agente.Integration.Tests" />
+  </ItemGroup>
+</Project>

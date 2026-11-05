@@ -1,0 +1,23 @@
+{
+  "status": "valido",
+  "achadosContem": [
+    {
+      "regraId": "EFD-ESTR-018",
+      "registro": "1990",
+      "linha": 27,
+      "campo": null
+    },
+    {
+      "regraId": "EFD-ESTR-011",
+      "registro": "9001",
+      "linha": null,
+      "campo": null
+    },
+    {
+      "regraId": "EFD-ESTR-011",
+      "registro": "9990",
+      "linha": null,
+      "campo": null
+    }
+  ]
+}

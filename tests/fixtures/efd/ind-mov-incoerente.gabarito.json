@@ -1,0 +1,23 @@
+{
+  "status": "valido",
+  "achados": [
+    {
+      "regraId": "EFD-ESTR-014",
+      "registro": "C100",
+      "linha": 12,
+      "campo": null
+    },
+    {
+      "regraId": "EFD-ESTR-014",
+      "registro": "C170",
+      "linha": 13,
+      "campo": null
+    },
+    {
+      "regraId": "EFD-ESTR-014",
+      "registro": "C190",
+      "linha": 14,
+      "campo": null
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Api.Agente.Domain\Api.Agente.Domain.csproj" />
+  </ItemGroup>
+</Project>
