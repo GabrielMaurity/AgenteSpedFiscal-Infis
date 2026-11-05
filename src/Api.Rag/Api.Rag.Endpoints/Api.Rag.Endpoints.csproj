@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <UserSecretsId>agentespedfiscal-api-rag</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Api.Rag.Application\Api.Rag.Application.csproj" />
+    <ProjectReference Include="..\Api.Rag.Infrastructure\Api.Rag.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Shared\AgenteSpedFiscal.Contracts.Mcp\AgenteSpedFiscal.Contracts.Mcp.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Api.Rag.Tests" />
+  </ItemGroup>
+</Project>
