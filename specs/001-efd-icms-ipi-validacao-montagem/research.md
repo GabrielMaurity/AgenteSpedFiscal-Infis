@@ -412,7 +412,8 @@ Itens marcados com **ADR** DEVEM ser registrados em `docs/adr/` antes da tarefa 
   `Descricao`, `Data_Inicio`, `Data_Fim`) e texto delimitado por `;`, `|` ou tabulação (código,
   descrição e, opcionalmente, início e fim da vigência), em UTF-8 ou ISO 8859-1. Só códigos de 8
   dígitos são gravados; `31/12/9999` vale como sem fim de vigência.
-- **Pendência**: o formato ainda não foi conferido em arquivo oficial. Ao obter a tabela (tabelas
+- **Atualização (2026-11-10)**: a tabela oficial recebida é uma planilha `.xlsx` com títulos antes do cabeçalho e as colunas `Código`, `Descrição`, `Data Início`, `Data Fim`, `Ato Legal Início`, `Número` e `Ano`; o leitor precisa aceitar esse formato (T120).
+- **Pendência anterior**: o formato ainda não foi conferido em arquivo oficial. Ao obter a tabela (tabelas
   do PVA ou publicação oficial de NCM), ajustar o leitor e registrar a fonte usada.
 - **Alternativas**: um único formato fixo (depende de uma fonte ainda não obtida).
 
@@ -429,9 +430,10 @@ Itens marcados com **ADR** DEVEM ser registrados em `docs/adr/` antes da tarefa 
 
 ## R-36 — Documentação interativa da API (Swagger)
 
-- **Decisão**: não adotada nesta etapa, por decisão do usuário. Os contratos REST continuam nos
-  arquivos OpenAPI escritos à mão em `contracts/`.
-- **Consequência**: não há verificação automática de que a API implementada segue o YAML, e o
-  YAML não foi validado por parser. Revisitar no polimento: documento gerado pelo
-  `Microsoft.AspNetCore.OpenApi`, tela só em desenvolvimento e teste que compara o documento
-  gerado com o contrato.
+- **Decisão (revista em 2026-11-10, a pedido do usuário)**: adotada. Cada API gera o documento
+  com `Microsoft.AspNetCore.OpenApi` em `/openapi/v1.json` e exibe a tela do Swagger
+  (`Swashbuckle.AspNetCore.SwaggerUI`) em `/swagger`, só no ambiente `Development`, com o
+  esquema Bearer para colar o token do `dotnet user-jwts`. Os dois caminhos são anônimos e ficam
+  antes da autenticação, porque a política padrão exige token em toda rota.
+- **Consequência**: os contratos de referência continuam nos arquivos OpenAPI escritos à mão em
+  `contracts/`. Ainda falta um teste que compare o documento gerado com o contrato.

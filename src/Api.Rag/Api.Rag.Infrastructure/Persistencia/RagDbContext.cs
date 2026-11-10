@@ -37,6 +37,16 @@ public sealed class DocumentoEntidade
     public int? Dimensao { get; set; }
     public DateTimeOffset IngeridoEm { get; set; }
     public required string IngeridoPor { get; set; }
+    public string? MotivoFalha { get; set; }
+}
+
+/// <summary>Arquivo original do documento, guardado para o reprocessamento (FR-061).</summary>
+public sealed class DocumentoArquivoEntidade
+{
+    public Guid DocumentoId { get; set; }
+    public required string Nome { get; set; }
+    public required string TipoConteudo { get; set; }
+    public required byte[] Conteudo { get; set; }
 }
 
 public sealed class TrechoEntidade
@@ -77,6 +87,7 @@ public sealed class RagDbContext(DbContextOptions<RagDbContext> opcoes) : DbCont
 {
     public DbSet<DocumentoEntidade> Documentos => Set<DocumentoEntidade>();
     public DbSet<TrechoEntidade> Trechos => Set<TrechoEntidade>();
+    public DbSet<DocumentoArquivoEntidade> Arquivos => Set<DocumentoArquivoEntidade>();
     public DbSet<ConsumoEmbeddingEntidade> ConsumosEmbeddings => Set<ConsumoEmbeddingEntidade>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -104,8 +115,20 @@ public sealed class RagDbContext(DbContextOptions<RagDbContext> opcoes) : DbCont
             e.Property(p => p.Dimensao).HasColumnName("dimensao");
             e.Property(p => p.IngeridoEm).HasColumnName("ingerido_em");
             e.Property(p => p.IngeridoPor).HasColumnName("ingerido_por");
+            e.Property(p => p.MotivoFalha).HasColumnName("motivo_falha");
             e.HasIndex(p => p.Sha256).IsUnique();
             e.HasIndex(p => new { p.TipoDocumento, p.Versao });
+        });
+
+        modelBuilder.Entity<DocumentoArquivoEntidade>(e =>
+        {
+            e.ToTable("documento_arquivo");
+            e.HasKey(p => p.DocumentoId);
+            e.Property(p => p.DocumentoId).HasColumnName("documento_id");
+            e.Property(p => p.Nome).HasColumnName("nome");
+            e.Property(p => p.TipoConteudo).HasColumnName("tipo_conteudo");
+            e.Property(p => p.Conteudo).HasColumnName("conteudo");
+            e.HasOne<DocumentoEntidade>().WithOne().HasForeignKey<DocumentoArquivoEntidade>(p => p.DocumentoId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<TrechoEntidade>(e =>

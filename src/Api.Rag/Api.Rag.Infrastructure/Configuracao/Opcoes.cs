@@ -17,6 +17,26 @@ public sealed class OpenAiOpcoes
     /// <summary>Precisa coincidir com a coluna vector(1536); trocar exige migração e reprocessamento.</summary>
     [Range(1536, 1536)]
     public int Dimensao { get; set; } = 1536;
+
+    [Required(AllowEmptyStrings = false)]
+    [Url]
+    public string Endpoint { get; set; } = "https://api.openai.com/v1/";
+
+    [Range(1, 300)]
+    public int TimeoutSegundos { get; set; } = 60;
+
+    /// <summary>Retentativas em erro transitório (429 e 5xx); cada tentativa gera um registro de consumo (P-17).</summary>
+    [Range(0, 5)]
+    public int Retentativas { get; set; } = 2;
+}
+
+public sealed class IngestaoOpcoes
+{
+    public const string Secao = "Ingestao";
+
+    /// <summary>O Guia Prático 3.2.4 tem cerca de 6,5 MB.</summary>
+    [Range(1, 1024L * 1024 * 1024)]
+    public long TamanhoMaximoArquivoBytes { get; set; } = 100L * 1024 * 1024;
 }
 
 public sealed class PostgresOpcoes
@@ -63,6 +83,7 @@ public static class ConfiguracaoExtensions
         Registrar<PersistenciaOpcoes>(services, PersistenciaOpcoes.Secao);
         Registrar<BuscaOpcoes>(services, BuscaOpcoes.Secao);
         Registrar<SegmentacaoOpcoes>(services, SegmentacaoOpcoes.Secao);
+        Registrar<IngestaoOpcoes>(services, IngestaoOpcoes.Secao);
         return services;
     }
 

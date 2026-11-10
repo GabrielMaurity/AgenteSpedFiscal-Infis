@@ -217,6 +217,15 @@ nessa conta (research R-30).
 | status | `recebido` \| `processando` \| `ativo` \| `falha` \| `inativo` | — |
 | modelo_embedding, dimensao | text, int | — |
 | ingerido_em, ingerido_por | timestamptz, text | — |
+| motivo_falha | text NULL | motivo genérico quando `status = falha`; o detalhe técnico fica só no log |
+
+### documento_arquivo
+
+| Coluna | Tipo | Regra |
+|---|---|---|
+| documento_id | uuid PK, FK de `documento` | um arquivo por documento; apagado junto com ele |
+| nome, tipo_conteudo | text | `application/pdf`, `text/markdown` ou `text/plain`, detectado na recepção |
+| conteudo | bytea | arquivo original, mantido para reprocessar (FR-061); documentos da base não seguem o descarte da FR-082, que vale para o arquivo EFD |
 
 ### trecho
 
@@ -226,7 +235,7 @@ nessa conta (research R-30).
 | documento_id | uuid FK | — |
 | ordem | int | — |
 | classificacao | `oficial` \| `interno` | cópia da classificação do documento, para filtro |
-| localizacao | jsonb | {capitulo, secao, registro?, paginaInicio, paginaFim} |
+| localizacao | jsonb | {capitulo, secao, registro?, paginaInicio, paginaFim}; no Capítulo III do Guia, `secao` é o bloco do leiaute (ex.: `Bloco C`) |
 | texto | text | — |
 | texto_hash | char(64) | único por documento |
 | tsv | tsvector | gerado, dicionário `portuguese` + códigos |

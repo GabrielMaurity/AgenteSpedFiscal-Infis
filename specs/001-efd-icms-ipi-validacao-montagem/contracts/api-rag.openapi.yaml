@@ -32,9 +32,11 @@ paths:
                 vigenciaInicio: { type: string, format: date }
                 vigenciaFim: { type: string, format: date }
       responses:
-        "202": { description: "Ingestão iniciada (documentoId, status = recebido)" }
-        "400": { description: "Metadados obrigatórios ausentes, classificação ausente, ou classificacao = interno com tipoDocumento oficial (e vice-versa)" }
-        "409": { description: "Documento idêntico já ingerido (sha256)" }
+        "202": { description: "Ingestão iniciada (documentoId, status = recebido); Location aponta para o detalhe" }
+        "400": { description: "Metadados obrigatórios ausentes, classificação ausente, classificacao = interno com tipoDocumento oficial (e vice-versa), arquivo vazio ou formato diferente de PDF, Markdown (.md) ou texto (.txt) em UTF-8" }
+        "409": { description: "Documento idêntico já ingerido (sha256); o corpo traz o documentoId existente" }
+        "413": { description: "Arquivo acima do limite configurado (Ingestao:TamanhoMaximoArquivoBytes, padrão 100 MB)" }
+        "415": { description: "Requisição fora de multipart/form-data" }
     get:
       summary: Lista documentos
       x-papeis: [admin_base]
@@ -51,7 +53,8 @@ paths:
       summary: Detalhe e status do processamento
       x-papeis: [admin_base]
       responses:
-        "200": { description: Documento com contagem de trechos }
+        "200": { description: "Documento com status, modeloEmbedding, dimensao, motivoFalha e quantidadeTrechos" }
+        "404": { description: Documento inexistente }
   /api/v1/documentos/{documentoId}/reprocessar:
     post:
       summary: Reprocessa segmentação e embeddings sem duplicar trechos
@@ -59,7 +62,9 @@ paths:
       parameters:
         - { name: documentoId, in: path, required: true, schema: { type: string, format: uuid } }
       responses:
-        "202": { description: Reprocessamento iniciado }
+        "202": { description: "Reprocessamento iniciado; trechos com o mesmo texto mantêm o id" }
+        "404": { description: Documento inexistente }
+        "409": { description: "Só documentos ativos ou com falha podem ser reprocessados" }
   /api/v1/documentos/{documentoId}/desativar:
     post:
       summary: Desativa a versão (deixa de ser recuperada; histórico mantido)
@@ -67,7 +72,9 @@ paths:
       parameters:
         - { name: documentoId, in: path, required: true, schema: { type: string, format: uuid } }
       responses:
-        "204": { description: Desativado }
+        "204": { description: "Desativado (idempotente)" }
+        "404": { description: Documento inexistente }
+        "409": { description: "Documento recebido ou em processamento" }
   /health/live:
     get: { security: [], summary: Liveness, responses: { "200": { description: OK } } }
   /health/ready:
