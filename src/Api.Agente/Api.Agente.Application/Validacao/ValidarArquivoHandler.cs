@@ -141,7 +141,7 @@ public sealed class ValidarArquivoHandler(
                 arquivo, leiaute!, dados.Catalogo, identificacao, parametros.OcorrenciasDetalhadasPorRegra, cancelamento, tabelaNcm);
         }
 
-        execucao.AplicarResultado(resultado.Achados, resultado.Totais, resultado.RegrasExecutadas, resultado.NaoRealizadas);
+        execucao.AplicarResultado(resultado.Achados, resultado.Totais, resultado.RegrasExecutadas, resultado.NaoRealizadas, resultado.ForaDoAlcance);
         execucao.AtualizarEtapa(4, StatusEtapa.Concluida, relogio.GetUtcNow());
 
         foreach (var etapa in EtapasDeAnalise)

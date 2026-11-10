@@ -87,9 +87,11 @@ public class MotorValidacaoTests
 
         // As 18 estruturais e as 6 de negócio que não dependem de dado externo nem estão pendentes.
         Assert.Equal(24, resultado.RegrasExecutadas.Count);
+        // Sem tabela de NCM: única dependência que pode voltar. Os demais são limites permanentes (research R-30).
+        Assert.Equal([RegrasNegocio.NcmVigente], resultado.NaoRealizadas.Select(n => n.Referencia));
         Assert.Equal(
-            [RegrasNegocio.NcmVigente, RegrasNegocio.LacunaNumeracao, RegrasNegocio.TributosReforma],
-            resultado.NaoRealizadas.Select(n => n.Referencia).Order());
+            [RegrasNegocio.LacunaNumeracao, RegrasNegocio.TributosReforma],
+            resultado.ForaDoAlcance.Select(n => n.Referencia).Order());
     }
 
     [Fact]
@@ -181,7 +183,8 @@ public class MotorValidacaoTests
 
         Assert.DoesNotContain(resultado.Achados, a => a.RegraId == pendente.Id);
         Assert.DoesNotContain(pendente.Id, resultado.RegrasExecutadas);
-        Assert.Contains(resultado.NaoRealizadas, n => n.Referencia == pendente.Id && n.Categoria == Categoria.AusenciaEvidencias);
+        Assert.Contains(resultado.ForaDoAlcance, n => n.Referencia == pendente.Id && n.Categoria == Categoria.AusenciaEvidencias);
+        Assert.DoesNotContain(resultado.NaoRealizadas, n => n.Referencia == pendente.Id);
     }
 
     [Fact]

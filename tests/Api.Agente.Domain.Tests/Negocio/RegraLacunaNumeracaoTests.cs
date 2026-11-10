@@ -34,13 +34,14 @@ public class RegraLacunaNumeracaoTests
     }
 
     [Fact]
-    public async Task Regra_pendente_nao_executa_e_fica_listada_como_nao_realizada()
+    public async Task Regra_pendente_nao_executa_e_fica_listada_fora_do_alcance()
     {
         var resultado = await FixturesEfd.ValidarCasoAsync("lacuna-numeracao-propria", Cancelamento);
 
         Assert.DoesNotContain(resultado.Achados, a => a.RegraId == Regra);
         Assert.DoesNotContain(Regra, resultado.RegrasExecutadas);
-        Assert.Equal(Categoria.AusenciaEvidencias, Assert.Single(resultado.NaoRealizadas, n => n.Referencia == Regra).Categoria);
+        Assert.Equal(Categoria.AusenciaEvidencias, Assert.Single(resultado.ForaDoAlcance, n => n.Referencia == Regra).Categoria);
+        Assert.DoesNotContain(resultado.NaoRealizadas, n => n.Referencia == Regra);
     }
 
     [Fact]

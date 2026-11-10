@@ -19,13 +19,14 @@ public class RegraTributosReformaTests
     }
 
     [Fact]
-    public async Task Verificacao_do_vl_opr_fica_como_ausencia_de_evidencias_e_nao_como_aprovada()
+    public async Task Verificacao_do_vl_opr_fica_fora_do_alcance_e_nao_como_aprovada()
     {
         var resultado = await FixturesEfd.ValidarCasoAsync("cbs-ibs-2026", Cancelamento);
 
-        var naoRealizada = Assert.Single(resultado.NaoRealizadas, n => n.Referencia == Regra);
-        Assert.Equal(Categoria.AusenciaEvidencias, naoRealizada.Categoria);
+        var item = Assert.Single(resultado.ForaDoAlcance, n => n.Referencia == Regra);
+        Assert.Equal(Categoria.AusenciaEvidencias, item.Categoria);
         Assert.DoesNotContain(Regra, resultado.RegrasExecutadas);
+        Assert.DoesNotContain(resultado.NaoRealizadas, n => n.Referencia == Regra);
     }
 
     [Fact]
@@ -36,7 +37,7 @@ public class RegraTributosReformaTests
 
         var resultado = await FixturesEfd.ValidarAsync(FixturesEfd.ComoArquivo(string.Join("\r\n", linhas)), Cancelamento);
 
-        Assert.DoesNotContain(resultado.NaoRealizadas, n => n.Referencia == Regra);
+        Assert.DoesNotContain(resultado.ForaDoAlcance, n => n.Referencia == Regra);
     }
 
     [Fact]

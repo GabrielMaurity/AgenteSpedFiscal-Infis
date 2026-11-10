@@ -19,6 +19,8 @@ public class MapeamentoMongoTests
             "a1", Categoria.ErroEstrutural, Severidade.Impeditiva, Origem.Validador, "Falta K990",
             "EFD-ESTR-001", 10, "K990", fonte: new Fonte("Guia", "3.2.4", "Cap. II", Guid.NewGuid())));
         execucao.RegistrarValidacaoNaoRealizada(new ValidacaoNaoRealizada("etapa-5", Categoria.FalhaTecnica, "base indisponível"));
+        execucao.AplicarResultado([], new Dictionary<string, long>(), [], [],
+            [new ValidacaoNaoRealizada("EFD-NEG-008", Categoria.AusenciaEvidencias, "Regra pendente de confirmação em fonte oficial.")]);
         return execucao.Exportar(Agora) with
         {
             Arquivo = new ArquivoExecucao("efd.txt", 10, new string('a', 64)),
@@ -60,6 +62,31 @@ public class MapeamentoMongoTests
         var achado = Assert.Single(execucao.Achados);
         Assert.Equal("K990", achado.Registro);
         Assert.Equal(original.Achados[0].Fonte, achado.Fonte);
+        Assert.Equal("base indisponível", Assert.Single(execucao.ValidacoesNaoRealizadas).Motivo);
+        Assert.Equal("EFD-NEG-008", Assert.Single(execucao.ForaDoAlcance).Referencia);
+    }
+
+    [Fact]
+    public void Lista_fora_do_alcance_e_gravada_com_o_nome_do_modelo_de_dados()
+    {
+        MongoExtensions.GarantirMapeamento();
+
+        var documento = EstadoCompleto().ToBsonDocument();
+
+        Assert.Equal("EFD-NEG-008", documento["foraDoAlcance"][0]["referencia"].AsString);
+        Assert.Equal("AusenciaEvidencias", documento["foraDoAlcance"][0]["categoria"].AsString);
+    }
+
+    [Fact]
+    public void Documento_gravado_antes_da_lista_e_lido_com_lista_vazia()
+    {
+        MongoExtensions.GarantirMapeamento();
+        var documento = EstadoCompleto().ToBsonDocument();
+        documento.Remove("foraDoAlcance");
+
+        var execucao = Execucao.Restaurar(BsonSerializer.Deserialize<ExecucaoEstado>(documento));
+
+        Assert.Empty(execucao.ForaDoAlcance);
         Assert.Equal("base indisponível", Assert.Single(execucao.ValidacoesNaoRealizadas).Motivo);
     }
 

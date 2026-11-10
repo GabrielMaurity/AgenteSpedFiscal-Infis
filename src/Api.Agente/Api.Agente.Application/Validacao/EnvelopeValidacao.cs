@@ -44,6 +44,7 @@ public sealed record EnvelopeValidacao(
     IReadOnlyList<EtapaEnvelope> Etapas,
     IReadOnlyList<string> RegrasExecutadas,
     IReadOnlyList<ValidacaoNaoRealizadaEnvelope> ValidacoesNaoRealizadas,
+    IReadOnlyList<ValidacaoNaoRealizadaEnvelope> ForaDoAlcance,
     IReadOnlyList<AchadoEnvelope> Achados,
     IReadOnlyDictionary<string, long> TotaisPorRegra,
     bool RevisaoHumanaNecessaria,
@@ -55,7 +56,7 @@ public sealed record EnvelopeValidacao(
 
 public static class EnvelopeMapper
 {
-    public const string VersaoContrato = "1.0.0";
+    public const string VersaoContrato = "1.1.0";
 
     public const string AvisoPva =
         "Sem achados nas regras implementadas não equivale a conformidade. A validação oficial do PVA permanece obrigatória.";
@@ -86,6 +87,7 @@ public static class EnvelopeMapper
             execucao.Etapas.Select(e => new EtapaEnvelope(e.Numero, e.Nome, ParaStatusEtapa(e.Status), e.Motivo)).ToList(),
             execucao.RegrasExecutadas,
             execucao.ValidacoesNaoRealizadas.Select(v => new ValidacaoNaoRealizadaEnvelope(v.Referencia, ParaCategoriaNaoRealizada(v.Categoria), v.Motivo)).ToList(),
+            execucao.ForaDoAlcance.Select(v => new ValidacaoNaoRealizadaEnvelope(v.Referencia, ParaCategoriaNaoRealizada(v.Categoria), v.Motivo)).ToList(),
             achados,
             execucao.TotaisPorRegra,
             execucao.RevisaoHumanaNecessaria,

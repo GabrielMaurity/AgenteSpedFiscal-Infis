@@ -236,6 +236,21 @@ public class StatusExecucaoTests
     }
 
     [Fact]
+    public async Task Limites_permanentes_ficam_fora_do_alcance_e_nao_entre_as_nao_realizadas()
+    {
+        var cenario = new Cenario();
+        cenario.TabelasNcm.Vigente = new TabelaNcm("2026.1", [], new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31));
+
+        var execucao = await cenario.ProcessarAsync("cbs-ibs-2026");
+
+        Assert.Equal(
+            [RegrasNegocio.LacunaNumeracao, RegrasNegocio.TributosReforma],
+            execucao.ForaDoAlcance.Select(f => f.Referencia).Order());
+        // Com a tabela de NCM, sobram só as etapas de base e IA, que chegam na US3.
+        Assert.All(execucao.ValidacoesNaoRealizadas, v => Assert.StartsWith("etapa-", v.Referencia, StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task Com_tabela_de_ncm_o_achado_entra_no_resultado()
     {
         var cenario = new Cenario();

@@ -93,6 +93,11 @@ public static class ExportadorCsv
             await escritor.WriteLineAsync($"# validacaoNaoRealizada{Separador}{Formatar(v.Referencia)}{Separador}{v.Categoria}{Separador}{Formatar(v.Motivo)}");
         }
 
+        foreach (var f in e.ForaDoAlcance)
+        {
+            await escritor.WriteLineAsync($"# foraDoAlcance{Separador}{Formatar(f.Referencia)}{Separador}{f.Categoria}{Separador}{Formatar(f.Motivo)}");
+        }
+
         await Metadado(escritor, "avisoPva", e.AvisoPva);
     }
 

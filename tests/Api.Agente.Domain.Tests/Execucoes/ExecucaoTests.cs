@@ -80,6 +80,57 @@ public class ExecucaoTests
         Assert.Equal(EstadoExecucao.ConcluidaComLimitacoes, execucao.Estado);
     }
 
+    private static Execucao ComItemForaDoAlcance()
+    {
+        var execucao = Nova();
+        execucao.AplicarResultado(
+            [],
+            new Dictionary<string, long>(),
+            ["EFD-ESTR-001"],
+            [],
+            [new ValidacaoNaoRealizada("EFD-NEG-008", Categoria.AusenciaEvidencias, "Regra pendente de confirmação em fonte oficial.")]);
+        return execucao;
+    }
+
+    [Fact]
+    public void Item_fora_do_alcance_nao_impede_concluida()
+    {
+        var execucao = ComItemForaDoAlcance();
+
+        execucao.Concluir(analiseIaAceita: true);
+
+        Assert.Equal(EstadoExecucao.Concluida, execucao.Estado);
+        Assert.Equal("EFD-NEG-008", Assert.Single(execucao.ForaDoAlcance).Referencia);
+        Assert.Empty(execucao.ValidacoesNaoRealizadas);
+    }
+
+    [Fact]
+    public void Item_fora_do_alcance_nao_exige_revisao_humana_por_si_so()
+    {
+        var execucao = ComItemForaDoAlcance();
+        execucao.Concluir(analiseIaAceita: true);
+
+        Assert.False(execucao.RevisaoHumanaNecessaria);
+    }
+
+    [Fact]
+    public void Exportar_e_restaurar_preserva_os_itens_fora_do_alcance()
+    {
+        var restaurada = Execucao.Restaurar(ComItemForaDoAlcance().Exportar(Agora));
+
+        Assert.Equal("EFD-NEG-008", Assert.Single(restaurada.ForaDoAlcance).Referencia);
+    }
+
+    [Fact]
+    public void Estado_antigo_sem_a_lista_restaura_como_lista_vazia()
+    {
+        var estado = Nova().Exportar(Agora) with { ForaDoAlcance = null };
+
+        var restaurada = Execucao.Restaurar(estado);
+
+        Assert.Empty(restaurada.ForaDoAlcance);
+    }
+
     [Fact]
     public void Qualquer_estado_pode_ir_para_falha_com_motivo()
     {

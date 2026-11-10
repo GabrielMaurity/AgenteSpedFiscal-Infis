@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://agentespedfiscal/contracts/envelope-validacao/1.0.0",
+  "$id": "https://agentespedfiscal/contracts/envelope-validacao/1.1.0",
   "title": "Envelope de resposta da validação (REST e A2A)",
   "description": "Preenchido pelo sistema. O campo analiseIa contém somente conteúdo do LLM já validado (llm-analise.schema.json) mais metadados do sistema.",
   "type": "object",
-  "required": ["versaoContrato", "execucaoId", "correlacaoId", "status", "criadoEm", "etapas", "regrasExecutadas", "validacoesNaoRealizadas", "achados", "totaisPorRegra", "revisaoHumanaNecessaria", "avisoPva"],
+  "required": ["versaoContrato", "execucaoId", "correlacaoId", "status", "criadoEm", "etapas", "regrasExecutadas", "validacoesNaoRealizadas", "foraDoAlcance", "achados", "totaisPorRegra", "revisaoHumanaNecessaria", "avisoPva"],
   "additionalProperties": false,
   "properties": {
-    "versaoContrato": { "const": "1.0.0" },
+    "versaoContrato": { "const": "1.1.0" },
     "execucaoId": { "type": "string", "format": "uuid" },
     "correlacaoId": { "type": "string" },
     "status": { "enum": ["recebida", "em_processamento", "concluida", "concluida_com_limitacoes", "falha"] },
@@ -57,6 +57,19 @@
         "properties": {
           "referencia": { "type": "string", "description": "regraId ou etapa" },
           "categoria": { "enum": ["ausencia_evidencias", "falha_tecnica"] },
+          "motivo": { "type": "string" }
+        }
+      }
+    },
+    "foraDoAlcance": {
+      "description": "Regras pendentes de fonte oficial e verificações que dependem de dado fora do arquivo. Sempre listadas; não impedem status concluida nem exigem revisão humana (FR-044, FR-046, research R-30).",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["referencia", "categoria", "motivo"],
+        "properties": {
+          "referencia": { "type": "string", "description": "regraId" },
+          "categoria": { "const": "ausencia_evidencias" },
           "motivo": { "type": "string" }
         }
       }
