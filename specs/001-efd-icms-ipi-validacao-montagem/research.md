@@ -412,7 +412,8 @@ Itens marcados com **ADR** DEVEM ser registrados em `docs/adr/` antes da tarefa 
   `Descricao`, `Data_Inicio`, `Data_Fim`) e texto delimitado por `;`, `|` ou tabulação (código,
   descrição e, opcionalmente, início e fim da vigência), em UTF-8 ou ISO 8859-1. Só códigos de 8
   dígitos são gravados; `31/12/9999` vale como sem fim de vigência.
-- **Pendência**: o formato ainda não foi conferido em arquivo oficial. Ao obter a tabela (tabelas
+- **Atualização (2026-11-10)**: a tabela oficial recebida é uma planilha `.xlsx` com títulos antes do cabeçalho e as colunas `Código`, `Descrição`, `Data Início`, `Data Fim`, `Ato Legal Início`, `Número` e `Ano`; o leitor precisa aceitar esse formato (T120).
+- **Pendência anterior**: o formato ainda não foi conferido em arquivo oficial. Ao obter a tabela (tabelas
   do PVA ou publicação oficial de NCM), ajustar o leitor e registrar a fonte usada.
 - **Alternativas**: um único formato fixo (depende de uma fonte ainda não obtida).
 

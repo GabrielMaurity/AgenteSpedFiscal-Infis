@@ -109,6 +109,32 @@ namespace Api.Rag.Infrastructure.Persistencia.Migracoes
                         });
                 });
 
+            modelBuilder.Entity("Api.Rag.Infrastructure.Persistencia.DocumentoArquivoEntidade", b =>
+                {
+                    b.Property<Guid>("DocumentoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("documento_id");
+
+                    b.Property<byte[]>("Conteudo")
+                        .IsRequired()
+                        .HasColumnType("bytea")
+                        .HasColumnName("conteudo");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("nome");
+
+                    b.Property<string>("TipoConteudo")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("tipo_conteudo");
+
+                    b.HasKey("DocumentoId");
+
+                    b.ToTable("documento_arquivo", (string)null);
+                });
+
             modelBuilder.Entity("Api.Rag.Infrastructure.Persistencia.DocumentoEntidade", b =>
                 {
                     b.Property<Guid>("Id")
@@ -137,6 +163,10 @@ namespace Api.Rag.Infrastructure.Persistencia.Migracoes
                     b.Property<string>("ModeloEmbedding")
                         .HasColumnType("text")
                         .HasColumnName("modelo_embedding");
+
+                    b.Property<string>("MotivoFalha")
+                        .HasColumnType("text")
+                        .HasColumnName("motivo_falha");
 
                     b.Property<string>("Origem")
                         .IsRequired()
@@ -271,6 +301,15 @@ namespace Api.Rag.Infrastructure.Persistencia.Migracoes
                         .WithMany()
                         .HasForeignKey("DocumentoId")
                         .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("Api.Rag.Infrastructure.Persistencia.DocumentoArquivoEntidade", b =>
+                {
+                    b.HasOne("Api.Rag.Infrastructure.Persistencia.DocumentoEntidade", null)
+                        .WithOne()
+                        .HasForeignKey("Api.Rag.Infrastructure.Persistencia.DocumentoArquivoEntidade", "DocumentoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Api.Rag.Infrastructure.Persistencia.TrechoEntidade", b =>

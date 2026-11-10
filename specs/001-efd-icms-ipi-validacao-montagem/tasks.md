@@ -204,7 +204,7 @@ conhecida, e verificar o achado com localização, regra e fonte.
 - [X] T117 [US2] Persistir e aplicar a lista na execução: `ForaDoAlcance` em `ExecucaoEstado` e em `Execucao.AplicarResultado`, fora das condições de `Concluir` e de `RevisaoHumanaNecessaria`, em `src/Api.Agente/Api.Agente.Domain/Execucoes/Execucao.cs`; o mapeamento do MongoDB em `src/Api.Agente/Api.Agente.Infrastructure/Persistencia/Mongo/MongoExtensions.cs` lê documentos antigos sem o campo como lista vazia, com teste em `tests/Api.Agente.Integration.Tests/Persistencia/MapeamentoMongoTests.cs`
 - [X] T118 [US2] Publicar a lista: `foraDoAlcance` e `VersaoContrato` = `1.1.0` em `src/Api.Agente/Api.Agente.Application/Validacao/EnvelopeValidacao.cs`; linhas `# foraDoAlcance;<referencia>;<categoria>;<motivo>` em `src/Api.Agente/Api.Agente.Application/Exportacao/ExportadorCsv.cs` ([exportacao-csv.md](contracts/exportacao-csv.md) 1.1.0); em [envelope-validacao.schema.json](contracts/envelope-validacao.schema.json), tornar `foraDoAlcance` obrigatório e `versaoContrato` igual a `1.1.0`, encerrando a transição
 - [X] T119 [US2] Ajustar as expectativas que mudam com a separação em `tests/Api.Agente.Domain.Tests/Estrutural/MotorValidacaoTests.cs` (`NaoRealizadas` passa a ter só `EFD-NEG-003`), `tests/Api.Agente.Domain.Tests/Negocio/RegraLacunaNumeracaoTests.cs`, `tests/Api.Agente.Domain.Tests/Negocio/RegraTributosReformaTests.cs` e `tests/Api.Agente.Application.Tests/Orquestracao/StatusExecucaoTests.cs`, e atualizar a ressalva de T072 neste arquivo
-- [ ] T120 [US2] **Bloqueada até obter a tabela oficial de NCM**: conferir `src/Api.Agente/Api.Agente.Application/TabelasReferencia/ParserTabelaNcm.cs` com o arquivo oficial, ajustar o formato aceito, criar um teste com amostra do arquivo real em `tests/Api.Agente.Application.Tests/TabelasReferencia/ImportarNcmTests.cs` e registrar a fonte usada em [research.md](research.md) R-34
+- [ ] T120 [US2] **Desbloqueada em 2026-11-10** (planilha oficial `Tabela_NCM_Vigente_20261110.xlsx`: aba "Tabela NCM", títulos nas primeiras linhas, colunas `Código`, `Descrição`, `Data Início`, `Data Fim`, `Ato Legal Início`, `Número` e `Ano`; o leitor atual não aceita `.xlsx`): conferir `src/Api.Agente/Api.Agente.Application/TabelasReferencia/ParserTabelaNcm.cs` com o arquivo oficial, ajustar o formato aceito, criar um teste com amostra do arquivo real em `tests/Api.Agente.Application.Tests/TabelasReferencia/ImportarNcmTests.cs` e registrar a fonte usada em [research.md](research.md) R-34
 
 **Checkpoint**: quickstart §4 com os casos da US2 passa; `foraDoAlcance` aparece no envelope e no CSV; a suíte com Docker passa com o envelope 1.1.0.
 
@@ -220,24 +220,31 @@ filtrando versão e classificação; reingerir o mesmo arquivo sem duplicar.
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T078 [P] [US4] Criar `tests/Api.Rag.Tests/Segmentacao/SegmentadorGuiaTests.cs` com páginas de amostra do Guia 3.2.4 em `tests/fixtures/base/`: um chunk por registro mantendo a tabela de campos inteira, página inicial e final corretas, cabeçalho e rodapé removidos
-- [ ] T079 [P] [US4] Criar `tests/Api.Rag.Tests/Ingestao/IngestaoTests.cs`: `409` para o mesmo SHA-256; sem duplicar trechos ao reprocessar; `400` sem `versao` ou `classificacao`; `400` para `classificacao = interno` com tipo oficial e vice-versa; documento desativado deixa de ser recuperado
-- [ ] T080 [P] [US4] Criar `tests/Api.Rag.Tests/Mcp/FerramentasMcpTests.cs`: `buscar_trechos` exige exatamente um entre `versao` e `periodo`; filtra por versão e por `classificacoes`; devolve `classificacao` e `documento` por trecho; `semResultados = true` sem correspondência; `obter_trecho` de documento inativo retorna `nao_encontrado`; chamada sem token de serviço é negada
-- [ ] T081 [P] [US4] Criar `tests/fixtures/base/faq-interno.md` (material interno de teste) com uma resposta que não existe no Guia
+- [X] T078 [P] [US4] Criar `tests/Api.Rag.Tests/Segmentacao/SegmentadorGuiaTests.cs` com páginas de amostra do Guia 3.2.4 em `tests/fixtures/base/`: um chunk por registro mantendo a tabela de campos inteira, página inicial e final corretas, cabeçalho e rodapé removidos
+- [X] T079 [P] [US4] Criar `tests/Api.Rag.Tests/Ingestao/IngestaoTests.cs`: `409` para o mesmo SHA-256; sem duplicar trechos ao reprocessar; `400` sem `versao` ou `classificacao`; `400` para `classificacao = interno` com tipo oficial e vice-versa; documento desativado deixa de ser recuperado
+- [X] T080 [P] [US4] Criar `tests/Api.Rag.Tests/Mcp/FerramentasMcpTests.cs`: `buscar_trechos` exige exatamente um entre `versao` e `periodo`; filtra por versão e por `classificacoes`; devolve `classificacao` e `documento` por trecho; `semResultados = true` sem correspondência; `obter_trecho` de documento inativo retorna `nao_encontrado`; chamada sem token de serviço é negada
+- [X] T081 [P] [US4] Criar `tests/fixtures/base/faq-interno.md` (material interno de teste) com uma resposta que não existe no Guia
 
 ### Implementation for User Story 4
 
-- [ ] T082 [US4] Criar as entidades `Documento` (classificação imutável, estados `recebido → processando → ativo → inativo` e `falha → processando`) e `Trecho` em `src/Api.Rag/Api.Rag.Domain/Documentos/`
-- [ ] T083 [P] [US4] Criar `ExtratorPdf` com PdfPig preservando a página e reconstruindo linhas por posição, e `ExtratorTexto` para Markdown e texto, em `src/Api.Rag/Api.Rag.Infrastructure/Extracao/` (research R-18)
-- [ ] T084 [P] [US4] Criar `SegmentadorGuia` (Capítulo → Seção → Registro, detectando `REGISTRO XXXX:`) e `SegmentadorGenerico` (títulos e parágrafos) com limite e sobreposição configuráveis em `src/Api.Rag/Api.Rag.Domain/Segmentacao/`
-- [ ] T085 [P] [US4] Criar `GeradorEmbeddings` (OpenAI, modelo e dimensão gravados no documento, registro em `consumo_embeddings`) em `src/Api.Rag/Api.Rag.Infrastructure/Embeddings/GeradorEmbeddings.cs`
-- [ ] T086 [US4] Criar o pipeline de ingestão assíncrono (fila + `BackgroundService`, deduplicação por SHA-256 do arquivo e do texto normalizado, reprocessar e desativar) em `src/Api.Rag/Api.Rag.Application/Ingestao/`
-- [ ] T087 [US4] Criar os endpoints REST de [api-rag.openapi.yaml](contracts/api-rag.openapi.yaml) (`POST`/`GET` `/api/v1/documentos`, `GET /{documentoId}`, `POST /{documentoId}/reprocessar`, `POST /{documentoId}/desativar`) em `src/Api.Rag/Api.Rag.Endpoints/Documentos/DocumentosEndpoints.cs`
-- [ ] T088 [US4] Criar a `BuscaHibrida` (cosseno no pgvector + `tsvector` `portuguese` + correspondência exata de códigos como `C190` e `VL_OPR`, fusão por RRF, filtros obrigatórios por status, tipo, versão ou período para oficiais, e por `classificacoes`) em `src/Api.Rag/Api.Rag.Infrastructure/Busca/BuscaHibrida.cs` (research R-13, R-27)
-- [ ] T089 [US4] Criar o servidor MCP Streamable HTTP em `/mcp` com `buscar_trechos`, `obter_trecho` e `listar_documentos` usando os DTOs de T039, em `src/Api.Rag/Api.Rag.Endpoints/Mcp/FerramentasMcp.cs`
+- [X] T082 [US4] Criar as entidades `Documento` (classificação imutável, estados `recebido → processando → ativo → inativo` e `falha → processando`) e `Trecho` em `src/Api.Rag/Api.Rag.Domain/Documentos/`
+- [X] T083 [P] [US4] Criar `ExtratorPdf` com PdfPig preservando a página e reconstruindo linhas por posição, e `ExtratorTexto` para Markdown e texto, em `src/Api.Rag/Api.Rag.Infrastructure/Extracao/` (research R-18)
+- [X] T084 [P] [US4] Criar `SegmentadorGuia` (Capítulo → Seção → Registro, detectando `REGISTRO XXXX:`) e `SegmentadorGenerico` (títulos e parágrafos) com limite e sobreposição configuráveis em `src/Api.Rag/Api.Rag.Domain/Segmentacao/`
+- [X] T085 [P] [US4] Criar `GeradorEmbeddings` (OpenAI, modelo e dimensão gravados no documento, registro em `consumo_embeddings`) em `src/Api.Rag/Api.Rag.Infrastructure/Embeddings/GeradorEmbeddings.cs`
+- [X] T086 [US4] Criar o pipeline de ingestão assíncrono (fila + `BackgroundService`, deduplicação por SHA-256 do arquivo e do texto normalizado, reprocessar e desativar) em `src/Api.Rag/Api.Rag.Application/Ingestao/`
+- [X] T087 [US4] Criar os endpoints REST de [api-rag.openapi.yaml](contracts/api-rag.openapi.yaml) (`POST`/`GET` `/api/v1/documentos`, `GET /{documentoId}`, `POST /{documentoId}/reprocessar`, `POST /{documentoId}/desativar`) em `src/Api.Rag/Api.Rag.Endpoints/Documentos/DocumentosEndpoints.cs`
+- [X] T088 [US4] Criar a `BuscaHibrida` (cosseno no pgvector + `tsvector` `portuguese` + correspondência exata de códigos como `C190` e `VL_OPR`, fusão por RRF, filtros obrigatórios por status, tipo, versão ou período para oficiais, e por `classificacoes`) em `src/Api.Rag/Api.Rag.Infrastructure/Busca/BuscaHibrida.cs` (research R-13, R-27)
+- [X] T089 [US4] Criar o servidor MCP Streamable HTTP em `/mcp` com `buscar_trechos`, `obter_trecho` e `listar_documentos` usando os DTOs de T039, em `src/Api.Rag/Api.Rag.Endpoints/Mcp/FerramentasMcp.cs`
 - [ ] T090 [US4] Ingerir o Guia 3.2.4 (`classificacao = oficial`, `vigenciaInicio = 2026-01-01`) e o `faq-interno.md` no ambiente Docker e registrar contagem de trechos e exemplos de busca em `specs/001-efd-icms-ipi-validacao-montagem/evidencias/ingestao-base.md`
 
 **Checkpoint**: [quickstart.md](quickstart.md) §3 passa; ferramentas MCP respondem com filtros corretos.
+
+**Ressalvas da implementação**:
+
+- **T090 pendente:** exige a chave da OpenAI no `.env`, que não está configurado neste ambiente; ninguém além do responsável deve inserir a credencial. A extração e a segmentação do PDF real do Guia 3.2.4 foram conferidas fora da API: 366 páginas, 723 trechos, 270 registros identificados, acentos e páginas corretos.
+- **Arquivo original guardado:** o reprocessamento precisa do PDF, então ele fica em `documento_arquivo` (data-model §5). Diferente do arquivo EFD, o documento da base não é descartado.
+- **Embeddings nos testes:** gerador determinístico por palavras, sem chamar a OpenAI. Ele valida filtros, deduplicação e fusão, mas não a qualidade da recuperação, que é medida nos evals (T105, R-17).
+- **Token de serviço:** o `/mcp` aceita qualquer token com audiência `api-rag`, inclusive o de administrador. Separar o papel de serviço depende do ADR-0004.
 
 ---
 
