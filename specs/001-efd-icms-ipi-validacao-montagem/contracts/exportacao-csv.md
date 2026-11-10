@@ -1,6 +1,6 @@
 # Contrato — Exportação do resultado em CSV (FR-048)
 
-**Versão do contrato**: 1.0.0 | **Endpoint**: `GET /api/v1/validacoes/{execucaoId}/exportacao.csv`
+**Versão do contrato**: 1.1.0 | **Endpoint**: `GET /api/v1/validacoes/{execucaoId}/exportacao.csv`
 ([api-agente.openapi.yaml](api-agente.openapi.yaml)) | **Decisões**: research R-28
 
 ## Formato
@@ -20,7 +20,8 @@
    `arquivoNome`, `arquivoSha256`, `codVer`, `periodoInicio`, `periodoFim`, `codFin`, `uf`,
    `indPerfil`, `cnpj`, `revisaoHumanaNecessaria`, `regrasExecutadas` (ids separados por `,`),
    `validacoesNaoRealizadas` (uma linha `# validacaoNaoRealizada;<referencia>;<categoria>;<motivo>`
-   por item) e `avisoPva` (texto fixo do envelope).
+   por item), `foraDoAlcance` (uma linha `# foraDoAlcance;<referencia>;<categoria>;<motivo>` por item,
+   a partir da 1.1.0; research R-30) e `avisoPva` (texto fixo do envelope).
 2. **Cabeçalho de achados** — exatamente:
 
    ```text

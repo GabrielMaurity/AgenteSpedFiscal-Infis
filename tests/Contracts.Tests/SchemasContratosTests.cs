@@ -42,9 +42,13 @@ public class SchemasContratosTests
         }
         """;
 
-    private static string Envelope(string achado = "") => $$"""
+    private const string ForaDoAlcance = """
+        "foraDoAlcance": [{ "referencia": "EFD-NEG-008", "categoria": "ausencia_evidencias", "motivo": "Regra pendente de confirmação em fonte oficial." }],
+        """;
+
+    private static string Envelope(string achado = "", string versao = "1.1.0", string foraDoAlcance = ForaDoAlcance) => $$"""
         {
-          "versaoContrato": "1.0.0",
+          "versaoContrato": "{{versao}}",
           "execucaoId": "019a5c2e-7b1f-7c3a-9d4e-1f2a3b4c5d6e",
           "correlacaoId": "abc",
           "status": "concluida_com_limitacoes",
@@ -52,6 +56,7 @@ public class SchemasContratosTests
           "etapas": [{ "numero": 1, "nome": "Receber arquivo", "status": "concluida" }],
           "regrasExecutadas": ["EFD-ESTR-001"],
           "validacoesNaoRealizadas": [{ "referencia": "etapa-5", "categoria": "falha_tecnica", "motivo": "base indisponível" }],
+          {{foraDoAlcance}}
           "achados": [{{achado}}],
           "totaisPorRegra": { "EFD-ESTR-001": 1 },
           "revisaoHumanaNecessaria": true,
@@ -111,6 +116,29 @@ public class SchemasContratosTests
     [Fact]
     public void Envelope_com_achado_deterministico_e_valido() =>
         Assert.True(Valido("envelope-validacao.schema.json", Envelope(AchadoEstrutural)));
+
+    [Fact]
+    public void Envelope_sem_lista_fora_do_alcance_e_invalido() =>
+        Assert.False(Valido("envelope-validacao.schema.json", Envelope(foraDoAlcance: "")));
+
+    [Fact]
+    public void Envelope_da_versao_anterior_e_invalido() =>
+        Assert.False(Valido("envelope-validacao.schema.json", Envelope(versao: "1.0.0")));
+
+    [Fact]
+    public void Envelope_com_lista_fora_do_alcance_vazia_e_valido() =>
+        Assert.True(Valido("envelope-validacao.schema.json", Envelope(foraDoAlcance: "\"foraDoAlcance\": [],")));
+
+    [Fact]
+    public void Item_fora_do_alcance_so_aceita_ausencia_de_evidencias() =>
+        Assert.False(Valido("envelope-validacao.schema.json",
+            Envelope(foraDoAlcance: ForaDoAlcance.Replace("ausencia_evidencias", "falha_tecnica", StringComparison.Ordinal))));
+
+    [Fact]
+    public void Item_fora_do_alcance_sem_motivo_e_invalido() =>
+        Assert.False(Valido("envelope-validacao.schema.json", Envelope(foraDoAlcance: """
+            "foraDoAlcance": [{ "referencia": "EFD-NEG-008", "categoria": "ausencia_evidencias" }],
+            """)));
 
     [Fact]
     public void Envelope_com_status_desconhecido_e_invalido() =>

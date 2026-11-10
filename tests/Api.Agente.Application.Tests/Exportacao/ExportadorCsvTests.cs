@@ -18,7 +18,8 @@ public class ExportadorCsvTests
             ],
             new Dictionary<string, long> { ["EFD-ESTR-001"] = 1, ["EFD-ESTR-002"] = 5 },
             ["EFD-ESTR-001", "EFD-ESTR-002"],
-            [new ValidacaoNaoRealizada("etapa-5", Categoria.AusenciaEvidencias, "base; indisponível")]);
+            [new ValidacaoNaoRealizada("etapa-5", Categoria.AusenciaEvidencias, "base; indisponível")],
+            [new ValidacaoNaoRealizada("EFD-NEG-008", Categoria.AusenciaEvidencias, "Regra pendente de confirmação em fonte oficial.")]);
         execucao.Concluir(analiseIaAceita: false);
         return execucao;
     }
@@ -51,6 +52,8 @@ public class ExportadorCsvTests
         Assert.Contains(linhas, l => l.StartsWith("# status;concluida_com_limitacoes", StringComparison.Ordinal));
         Assert.Contains(linhas, l => l.StartsWith("# avisoPva;", StringComparison.Ordinal));
         Assert.Contains(linhas, l => l.StartsWith("# validacaoNaoRealizada;etapa-5;ausencia_evidencias;\"base; indisponível\"", StringComparison.Ordinal));
+        Assert.Contains("# foraDoAlcance;EFD-NEG-008;ausencia_evidencias;Regra pendente de confirmação em fonte oficial.", linhas);
+        Assert.Contains("# versaoContrato;1.1.0", linhas);
     }
 
     [Fact]

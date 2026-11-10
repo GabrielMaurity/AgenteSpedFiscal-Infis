@@ -186,10 +186,27 @@ conhecida, e verificar o achado com localização, regra e fonte.
 
 **Ressalvas da implementação**:
 
-- **T072 / FR-024:** a lógica existe e está testada, mas `EFD-NEG-008` fica `pendente_confirmacao` e não executa (P-01, FR-030): o Guia 3.2.4 e a NT 2026.001 não têm regra de lacuna de numeração de documentos, e o Guia dispensa informar denegados e inutilizados desde 12/2021. Cobre só o `C100`.
+- **T072 / FR-024:** a lógica existe e está testada, mas `EFD-NEG-008` fica `pendente_confirmacao`, não executa (P-01, FR-030) e aparece em `foraDoAlcance` (R-30, T113–T119): o Guia 3.2.4 e a NT 2026.001 não têm regra de lacuna de numeração de documentos, e o Guia dispensa informar denegados e inutilizados desde 12/2021. Cobre só o `C100`.
 - **T076:** o parser aceita JSON com `Nomenclaturas` e texto delimitado, mas ainda não foi testado com o arquivo oficial, que segue pendente.
 - **Severidades:** `impeditiva` foi usada onde o Guia traz validação explícita e `advertencia` onde a regra é indireta ou há texto conflitante (`EFD-NEG-003`, `005` e `006`). A classificação do PVA ainda será conferida em T108.
-- **Registros obrigatórios ausentes** (`E100`, `E110`, `1010`, obrigatoriedade por perfil) continuam sem regra e sem tarefa.
+- **Registros obrigatórios ausentes** (`E100`, `E110`, `1010`, obrigatoriedade por perfil) continuam sem regra e sem tarefa: a decisão está em aberto (research R-35) e precisa de `/speckit-clarify` antes de virar tarefa.
+
+### Ajustes da US2 após o clarify de 2026-11-05 (research R-30 e R-34)
+
+**Goal**: regras pendentes de fonte e verificações que dependem de dado fora do arquivo passam para a lista `foraDoAlcance`, que não impede `concluida` nem exige revisão humana (FR-044, FR-046).
+
+**Independent Test**: validar `cbs-ibs-2026.txt` e `lacuna-numeracao-propria.txt` e verificar `EFD-NEG-008` e `EFD-NEG-009` em `foraDoAlcance`, fora de `validacoesNaoRealizadas`; validar `ncm-inexistente.txt` sem tabela e verificar `EFD-NEG-003` em `validacoesNaoRealizadas` (`falha_tecnica`).
+
+- [X] T113 [P] [US2] Atualizar os testes de contrato em `tests/Contracts.Tests/SchemasContratosTests.cs`: envelope com `versaoContrato` = `1.1.0` e `foraDoAlcance` obrigatório; item de `foraDoAlcance` com `referencia`, `categoria` = `ausencia_evidencias` e `motivo`; envelope `1.0.0` ou sem `foraDoAlcance` é recusado
+- [X] T114 [P] [US2] Criar `tests/Api.Agente.Domain.Tests/Negocio/ForaDoAlcanceTests.cs`: regra `pendente_confirmacao` aplicável ao período e regra ativa com `dependeDe` = `xml:documento` vão para `ResultadoValidacao.ForaDoAlcance` e não para `NaoRealizadas`; regra com `dependeDe` = `tabela:ncm` sem tabela continua em `NaoRealizadas` com `falha_tecnica`; nenhuma regra aparece nas duas listas nem em `RegrasExecutadas`
+- [X] T115 [P] [US2] Ampliar `tests/Api.Agente.Domain.Tests/Execucoes/ExecucaoTests.cs`: `Concluir(analiseIaAceita: true)` com `foraDoAlcance` preenchido e `validacoesNaoRealizadas` vazia resulta em `Concluida`; `RevisaoHumanaNecessaria` não é acionada só por `foraDoAlcance`
+- [X] T116 [US2] Separar a lista no domínio: adicionar `ForaDoAlcance` a `ResultadoValidacao` em `src/Api.Agente/Api.Agente.Domain/Efd/Validacao/MotorValidacao.cs`, classificando ali as regras `pendente_confirmacao` e as de `dependeDe` = `xml:documento`; trocar o registro da `RegraTributosReforma` (`src/Api.Agente/Api.Agente.Domain/Efd/Validacao/Negocio/RegraTributosReforma.cs`) para um método `RegistrarForaDoAlcance` em `src/Api.Agente/Api.Agente.Domain/Efd/Validacao/ContextoValidacao.cs`
+- [X] T117 [US2] Persistir e aplicar a lista na execução: `ForaDoAlcance` em `ExecucaoEstado` e em `Execucao.AplicarResultado`, fora das condições de `Concluir` e de `RevisaoHumanaNecessaria`, em `src/Api.Agente/Api.Agente.Domain/Execucoes/Execucao.cs`; o mapeamento do MongoDB em `src/Api.Agente/Api.Agente.Infrastructure/Persistencia/Mongo/MongoExtensions.cs` lê documentos antigos sem o campo como lista vazia, com teste em `tests/Api.Agente.Integration.Tests/Persistencia/MapeamentoMongoTests.cs`
+- [X] T118 [US2] Publicar a lista: `foraDoAlcance` e `VersaoContrato` = `1.1.0` em `src/Api.Agente/Api.Agente.Application/Validacao/EnvelopeValidacao.cs`; linhas `# foraDoAlcance;<referencia>;<categoria>;<motivo>` em `src/Api.Agente/Api.Agente.Application/Exportacao/ExportadorCsv.cs` ([exportacao-csv.md](contracts/exportacao-csv.md) 1.1.0); em [envelope-validacao.schema.json](contracts/envelope-validacao.schema.json), tornar `foraDoAlcance` obrigatório e `versaoContrato` igual a `1.1.0`, encerrando a transição
+- [X] T119 [US2] Ajustar as expectativas que mudam com a separação em `tests/Api.Agente.Domain.Tests/Estrutural/MotorValidacaoTests.cs` (`NaoRealizadas` passa a ter só `EFD-NEG-003`), `tests/Api.Agente.Domain.Tests/Negocio/RegraLacunaNumeracaoTests.cs`, `tests/Api.Agente.Domain.Tests/Negocio/RegraTributosReformaTests.cs` e `tests/Api.Agente.Application.Tests/Orquestracao/StatusExecucaoTests.cs`, e atualizar a ressalva de T072 neste arquivo
+- [ ] T120 [US2] **Bloqueada até obter a tabela oficial de NCM**: conferir `src/Api.Agente/Api.Agente.Application/TabelasReferencia/ParserTabelaNcm.cs` com o arquivo oficial, ajustar o formato aceito, criar um teste com amostra do arquivo real em `tests/Api.Agente.Application.Tests/TabelasReferencia/ImportarNcmTests.cs` e registrar a fonte usada em [research.md](research.md) R-34
+
+**Checkpoint**: quickstart §4 com os casos da US2 passa; `foraDoAlcance` aparece no envelope e no CSV; a suíte com Docker passa com o envelope 1.1.0.
 
 ---
 
@@ -263,7 +280,7 @@ determinísticos de validação semântica com LLM falso.
 ## Phase 7: Polish & Cross-Cutting Concerns
 
 - [ ] T107 [P] Criar um gerador de arquivos EFD sintéticos grandes em `tools/gerar-efd-sintetico/` e medir 50 MB (≤ 2 min) e 500 MB (≤ 15 min) com uso de memória, registrando em `specs/001-efd-icms-ipi-validacao-montagem/evidencias/desempenho.md` (SC-005)
-- [ ] T108 [P] Comparar os achados com relatórios do PVA gerados manualmente para o conjunto de referência e registrar em `specs/001-efd-icms-ipi-validacao-montagem/evidencias/comparacao-pva.md` (SC-002)
+- [ ] T108 [P] Comparar os achados com relatórios do PVA gerados manualmente para o conjunto de referência e registrar em `specs/001-efd-icms-ipi-validacao-montagem/evidencias/comparacao-pva.md` (SC-002); ajustar no catálogo `src/Api.Agente/Api.Agente.Domain/Efd/Dados/catalogo-regras-efd-icms-ipi.json` as severidades que divergirem do PVA (research R-32)
 - [ ] T109 [P] Revisar segurança (segredos fora do repositório, mascaramento em logs, injeção em CSV, autorização por papel em todos os endpoints) e registrar em `specs/001-efd-icms-ipi-validacao-montagem/evidencias/revisao-seguranca.md`
 - [ ] T110 Criar a matriz requisito → tarefa → teste em `specs/001-efd-icms-ipi-validacao-montagem/rastreabilidade.md` cobrindo FR-001 a FR-084 e SC-001 a SC-009 (P-21)
 - [ ] T111 Executar o [quickstart.md](quickstart.md) completo no Docker Compose e registrar o resultado em `specs/001-efd-icms-ipi-validacao-montagem/evidencias/quickstart.md`
@@ -278,7 +295,9 @@ determinísticos de validação semântica com LLM falso.
 - **Setup (Phase 1)**: sem dependências.
 - **Foundational (Phase 2)**: depende do Setup; bloqueia todas as histórias.
 - **US1 (Phase 3)**: depende da Phase 2. É o MVP.
-- **US2 (Phase 4)**: depende da US1 (`LeitorEfd` e `MotorValidacao`).
+- **US2 (Phase 4)**: depende da US1 (`LeitorEfd` e `MotorValidacao`). Os ajustes T113–T119
+  dependem de T068–T077 e DEVEM terminar antes de T102 (US3), que decide entre `concluida` e
+  `concluida_com_limitacoes`. T120 depende só da tabela oficial de NCM.
 - **US4 (Phase 5)**: depende só da Phase 2; pode rodar em paralelo com US1 e US2.
 - **US3 (Phase 6)**: depende da US1 e da US4.
 - **Polish (Phase 7)**: depende das histórias que mede (T107/T108 após US2; T111 após US3).
@@ -302,7 +321,8 @@ Setup → Foundational ─┬─ US1 (P1, MVP) ── US2 (P2) ──┐
 - Foundational: ADRs T012–T017; pares Api.Agente/Api.Rag (T019/T020, T021/T022, T023/T024,
   T025/T026, T036/T038); T035, T040–T042.
 - US1: testes T043–T047; validadores T053–T056 depois de T052.
-- US2: testes T065–T067; regras T068–T073.
+- US2: testes T065–T067; regras T068–T073; testes dos ajustes T113–T115. T116 → T117 → T118 → T119
+  são sequenciais (mesmos tipos e testes).
 - US4: testes T078–T081; T083–T085.
 - US3: testes T091–T095.
 - Equipes diferentes podem tocar US1/US2 (Api.Agente) e US4 (Api.Rag) ao mesmo tempo.

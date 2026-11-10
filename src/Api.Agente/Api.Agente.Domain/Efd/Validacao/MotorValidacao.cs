@@ -13,7 +13,8 @@ public sealed record ResultadoValidacao(
     IReadOnlyDictionary<string, long> Totais,
     IReadOnlyList<string> RegrasExecutadas,
     IReadOnlyList<ValidacaoNaoRealizada> NaoRealizadas,
-    long TotalLinhas);
+    long TotalLinhas,
+    IReadOnlyList<ValidacaoNaoRealizada> ForaDoAlcance);
 
 /// <summary>
 /// Validação determinística em uma passagem. Executa só regras ativas aplicáveis; regras pendentes de
@@ -75,19 +76,22 @@ public static class MotorValidacao
             validador.Finalizar(contexto);
         }
 
-        var naoRealizadas = aplicaveis
+        // Limite permanente: regra sem fonte oficial e verificação que depende de dado fora do arquivo.
+        var foraDoAlcance = aplicaveis
             .Where(r => !r.EstaAtiva && r.Status == "pendente_confirmacao")
             .Select(r => new ValidacaoNaoRealizada(r.Id, Categoria.AusenciaEvidencias, "Regra pendente de confirmação em fonte oficial."))
             .ToList();
+        foraDoAlcance.AddRange(contexto.ForaDoAlcance);
 
+        // Dependência que pode voltar: impede o status concluída (FR-044, research R-30).
         var dependentes = ativas.Values.Where(r => DependeDeDadoAusente(r, tabelaNcm)).ToList();
-        naoRealizadas.AddRange(dependentes
+        var naoRealizadas = dependentes
             .Where(r => r.DependeDe!.Contains(RegrasNegocio.DependenciaTabelaNcm) && tabelaNcm is null)
-            .Select(r => new ValidacaoNaoRealizada(r.Id, Categoria.FalhaTecnica, MotivoSemTabelaNcm)));
-        naoRealizadas.AddRange(contexto.NaoRealizadas);
+            .Select(r => new ValidacaoNaoRealizada(r.Id, Categoria.FalhaTecnica, MotivoSemTabelaNcm))
+            .ToList();
 
         var executadas = ativas.Keys.Except(dependentes.Select(r => r.Id)).ToList();
-        return new ResultadoValidacao(contexto.Achados, contexto.Totais, executadas, naoRealizadas, totalLinhas);
+        return new ResultadoValidacao(contexto.Achados, contexto.Totais, executadas, naoRealizadas, totalLinhas, foraDoAlcance);
     }
 
     /// <summary>Regra que depende de dado ausente não executa e não conta como executada (FR-044).</summary>

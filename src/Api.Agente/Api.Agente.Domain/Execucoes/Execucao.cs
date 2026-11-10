@@ -64,7 +64,8 @@ public sealed record ExecucaoEstado(
     string? MotivoFalha,
     DateTimeOffset CriadoEm,
     DateTimeOffset AtualizadoEm,
-    DateTimeOffset ExpiraEm);
+    DateTimeOffset ExpiraEm,
+    List<ValidacaoNaoRealizada>? ForaDoAlcance = null);
 
 /// <summary>Processamento de um arquivo, com as nove etapas da constitution P-05.</summary>
 public sealed class Execucao
@@ -114,6 +115,9 @@ public sealed class Execucao
     public IReadOnlyList<Etapa> Etapas => _estado.Etapas;
     public IReadOnlyList<Achado> Achados => _estado.Achados;
     public IReadOnlyList<ValidacaoNaoRealizada> ValidacoesNaoRealizadas => _estado.ValidacoesNaoRealizadas;
+
+    /// <summary>Limites permanentes da validação: sempre listados, sem efeito no status nem na revisão (research R-30).</summary>
+    public IReadOnlyList<ValidacaoNaoRealizada> ForaDoAlcance => _estado.ForaDoAlcance!;
     public IReadOnlyDictionary<string, long> TotaisPorRegra => _estado.TotaisPorRegra;
     public string? MotivoFalha { get; private set; }
 
@@ -139,14 +143,15 @@ public sealed class Execucao
 
         return new Execucao(new ExecucaoEstado(
             id, orgId, usuarioId, correlacaoId, canal, EstadoExecucao.Recebida, etapas, null, null,
-            [], [], [], [], null, agora, agora, agora.AddDays(DiasRetencao)))
+            [], [], [], [], null, agora, agora, agora.AddDays(DiasRetencao), []))
         {
             Estado = EstadoExecucao.Recebida,
         };
     }
 
+    /// <summary>Execuções gravadas antes da lista de itens fora do alcance a restauram vazia.</summary>
     public static Execucao Restaurar(ExecucaoEstado estado) =>
-        new(estado)
+        new(estado with { ForaDoAlcance = estado.ForaDoAlcance ?? [] })
         {
             Estado = estado.Estado,
             MotivoFalha = estado.MotivoFalha,
@@ -181,10 +186,12 @@ public sealed class Execucao
         IEnumerable<Achado> achados,
         IReadOnlyDictionary<string, long> totais,
         IEnumerable<string> regrasExecutadas,
-        IEnumerable<ValidacaoNaoRealizada> naoRealizadas)
+        IEnumerable<ValidacaoNaoRealizada> naoRealizadas,
+        IEnumerable<ValidacaoNaoRealizada> foraDoAlcance)
     {
         GarantirNaoFinalizada();
         _estado.Achados.AddRange(achados);
+        _estado.ForaDoAlcance!.AddRange(foraDoAlcance);
         foreach (var (regra, total) in totais)
         {
             _estado.TotaisPorRegra[regra] = _estado.TotaisPorRegra.GetValueOrDefault(regra) + total;

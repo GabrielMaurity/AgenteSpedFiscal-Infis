@@ -17,7 +17,7 @@ public sealed class ContextoValidacao(
 
     private readonly Dictionary<string, long> _totais = [];
     private readonly List<Achado> _achados = [];
-    private readonly List<ValidacaoNaoRealizada> _naoRealizadas = [];
+    private readonly List<ValidacaoNaoRealizada> _foraDoAlcance = [];
 
     public DefinicaoLeiaute Leiaute => leiaute;
 
@@ -25,14 +25,17 @@ public sealed class ContextoValidacao(
 
     public IReadOnlyDictionary<string, long> Totais => _totais;
 
-    public IReadOnlyList<ValidacaoNaoRealizada> NaoRealizadas => _naoRealizadas;
+    public IReadOnlyList<ValidacaoNaoRealizada> ForaDoAlcance => _foraDoAlcance;
 
-    /// <summary>Regra ativa que não pôde verificar o arquivo por falta de dado (FR-044).</summary>
-    public void RegistrarNaoRealizada(string regraId, Categoria categoria, string motivo)
+    /// <summary>
+    /// Regra ativa que nunca pode ser verificada pelo arquivo, porque o dado só existe fora dele (ex.: XML).
+    /// Fica listada, mas não conta como validação não realizada (FR-044, research R-30).
+    /// </summary>
+    public void RegistrarForaDoAlcance(string regraId, string motivo)
     {
-        if (regrasAtivas.ContainsKey(regraId) && _naoRealizadas.All(n => n.Referencia != regraId))
+        if (regrasAtivas.ContainsKey(regraId) && _foraDoAlcance.All(n => n.Referencia != regraId))
         {
-            _naoRealizadas.Add(new ValidacaoNaoRealizada(regraId, categoria, motivo));
+            _foraDoAlcance.Add(new ValidacaoNaoRealizada(regraId, Categoria.AusenciaEvidencias, motivo));
         }
     }
 

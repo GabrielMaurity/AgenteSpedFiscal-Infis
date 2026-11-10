@@ -66,12 +66,19 @@ Esperado: `202` com `execucaoId`. Consultar `GET /api/v1/validacoes/{execucaoId}
 
 | Caso de referência | Resultado esperado |
 |---|---|
-| `valido-perfil-a.txt` | `concluida_com_limitacoes` até a US3 (depois, `concluida`), sem achados impeditivos, `avisoPva` presente, nenhuma afirmação de conformidade |
+| `valido-perfil-a.txt` | `concluida_com_limitacoes` até a US3; depois, `concluida` quando houver tabela de NCM para o período e a análise da IA for aceita. Sem achados impeditivos, `avisoPva` presente, `EFD-NEG-008` e `EFD-NEG-009` em `foraDoAlcance`, nenhuma afirmação de conformidade |
 | `sem-k990.txt` | achado `erro_estrutural`, severidade `impeditiva`, registro `K990` |
 | `c170-orfao.txt` | achado na linha do `C170` sem `C100` |
 | `ind-mov-incoerente.txt` | achado de `IND_MOV` = `1` com registros de dados |
 | `9900-divergente.txt` | achados com quantidade declarada × encontrada |
 | `unidade-sem-0190.txt` | `inconsistencia_negocio` com a unidade e as linhas |
+| `sem-0220.txt` | `EFD-NEG-002` no `C170`, com a unidade movimentada e a de estoque |
+| `ncm-inexistente.txt` | sem tabela de NCM: `EFD-NEG-003` em `validacoesNaoRealizadas` (`falha_tecnica`); com a tabela importada no passo 4.1: achado `EFD-NEG-003`, advertência |
+| `c100-divergente.txt` | `EFD-NEG-004`, `005` e `006` no `C100`, com valores comparados e diferença |
+| `lacuna-numeracao-propria.txt` | nenhum achado de lacuna: `EFD-NEG-008` pendente de fonte, listada em `foraDoAlcance` |
+| `lacuna-numeracao-terceiros.txt` | nenhum achado de lacuna |
+| `cbs-ibs-2026.txt` | nenhum achado de `VL_DOC`; `EFD-NEG-009` em `foraDoAlcance` |
+| `ficticio-completo-2026-01.txt` | nenhum achado estrutural ou de negócio |
 | `periodo-2025.txt` | `falha` na etapa 3, motivo "período não suportado" |
 | `periodo-2027.txt` | `falha` na etapa 3: o leiaute 021 ainda não é aceito |
 | `injecao-prompt.txt` | mesmos achados do arquivo sem o texto malicioso |
@@ -83,6 +90,15 @@ Validar também: o arquivo enviado não existe mais no volume temporário após 
 `unidade-sem-0190.txt`. Esperado: arquivo UTF-8 com BOM, metadados `#` no topo, cabeçalho igual
 ao de [exportacao-csv.md](contracts/exportacao-csv.md) e os mesmos `id` de achados do envelope.
 Durante o processamento, o mesmo endpoint retorna `409`.
+
+### 4.1 Importar a tabela de NCM (história 2)
+
+`POST http://localhost:8080/api/v1/tabelas-referencia/ncm` (multipart, papel `admin_base`) com
+`arquivo`, `origem`, `versao`, `vigenciaInicio` e, opcionalmente, `vigenciaFim`.
+
+Esperado: `201` com `quantidadeCodigos`; reenviar a mesma versão retorna `409`; arquivo sem
+código de 8 dígitos retorna `400`; papel `analista` recebe `403`. `GET` no mesmo endereço lista
+as versões. `GET /api/v1/regras?status=pendente_confirmacao` lista `EFD-NEG-008` e `EFD-NEG-010`.
 
 ## 5. Dependência indisponível (P-04, SC-004)
 

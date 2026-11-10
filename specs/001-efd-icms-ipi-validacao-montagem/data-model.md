@@ -41,8 +41,9 @@ arquivo (FR-082).
 | nivel | int | "Nível hierárquico" do Guia |
 | pai | string(4)? | nulo só para nível 0 |
 | ocorrencia | `1:1` \| `1:N` | conforme Guia |
-| obrigatoriedadePorPerfil | map perfil → O/OC/N | Guia, Cap. II, Seção 2 |
+| obrigatoriedadePorPerfil | map perfil → O/OC/N | Guia, Cap. III, Seção 5. **Não implementado**; depende da decisão em aberto (research R-35) |
 | campos[] | {numero, nome, tipo `N`/`C`, tamanho?, tamanhoExato, decimais?, obrigatorio `O`/`OC`} | Guia, detalhamento do registro |
+| excecoesObrigatoriedade[]? | {situacoes (valores de `COD_SIT`), camposObrigatorios[], fonte} | só nos registros cuja obrigatoriedade varia com a situação do documento: `C100`, `C500`, `D100`, `D400`, `D500`, `D700`, `1500` (research R-33) |
 | fonte | Fonte | página/seção do Guia |
 
 ### Fonte (objeto de valor)
@@ -72,7 +73,7 @@ Schema: [catalogo-regras.schema.json](contracts/catalogo-regras.schema.json).
 | aplicacao | {codVer[], periodoInicio, periodoFim?, perfis[]?, ufs[]?} | — |
 | fonte | Fonte | obrigatória e completa quando `status = ativa` |
 | origemCandidata | string? | ex.: "documento-base, seção 6" (FR-031) |
-| dependeDe | string[] | dados externos necessários (ex.: `tabela:ncm`, `xml:documento`) |
+| dependeDe | string[] | dados externos necessários. `tabela:ncm`: sem versão para o período ⇒ validação não realizada (`falha_tecnica`). `xml:documento`: nunca disponível no arquivo ⇒ item `foraDoAlcance` (`ausencia_evidencias`), research R-30 |
 | acaoCorretiva | string | texto apresentado ao usuário |
 
 ### FonteOficialCatalogo (lista `fontesOficiais` do catálogo)
@@ -104,7 +105,8 @@ em `fontesOficiais`. Material interno nunca entra nessa lista (FR-030, research 
 | arquivo | {nome, tamanhoBytes, sha256, codificacaoDetectada} | sem conteúdo |
 | identificacao | {codVer, periodoInicio, periodoFim, codFin, uf, cnpj (mascarado em logs), indPerfil} | de `0000` |
 | regrasExecutadas | string[] | ids do catálogo |
-| validacoesNaoRealizadas[] | {regraId \| etapa, motivo, categoria} | FR-044 |
+| validacoesNaoRealizadas[] | {regraId \| etapa, motivo, categoria} | FR-044; só dependência que pode voltar ou falha técnica |
+| foraDoAlcance[] | {regraId, motivo, categoria} | FR-044; regras pendentes de fonte e verificações que dependem de dado fora do arquivo (research R-30); não afeta status nem revisão humana |
 | achados[] | Achado (até N por regra, R-08) | — |
 | totaisPorRegra | map regraId → long | contagem real |
 | analiseIa | AnaliseIa? | resultado validado do LLM |
@@ -127,7 +129,8 @@ No envelope ([envelope-validacao.schema.json](contracts/envelope-validacao.schem
 intermediários aparecem como `em_processamento`, com o detalhe em `etapas`.
 
 `concluida` só é permitido quando `validacoesNaoRealizadas` está vazia e a análise da IA foi
-aceita; caso contrário, `concluida_com_limitacoes` (P-04).
+aceita; caso contrário, `concluida_com_limitacoes` (P-04). Itens de `foraDoAlcance` não entram
+nessa conta (research R-30).
 
 ### Achado (subdocumento)
 
