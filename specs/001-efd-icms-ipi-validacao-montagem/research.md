@@ -430,9 +430,10 @@ Itens marcados com **ADR** DEVEM ser registrados em `docs/adr/` antes da tarefa 
 
 ## R-36 — Documentação interativa da API (Swagger)
 
-- **Decisão**: não adotada nesta etapa, por decisão do usuário. Os contratos REST continuam nos
-  arquivos OpenAPI escritos à mão em `contracts/`.
-- **Consequência**: não há verificação automática de que a API implementada segue o YAML, e o
-  YAML não foi validado por parser. Revisitar no polimento: documento gerado pelo
-  `Microsoft.AspNetCore.OpenApi`, tela só em desenvolvimento e teste que compara o documento
-  gerado com o contrato.
+- **Decisão (revista em 2026-11-10, a pedido do usuário)**: adotada. Cada API gera o documento
+  com `Microsoft.AspNetCore.OpenApi` em `/openapi/v1.json` e exibe a tela do Swagger
+  (`Swashbuckle.AspNetCore.SwaggerUI`) em `/swagger`, só no ambiente `Development`, com o
+  esquema Bearer para colar o token do `dotnet user-jwts`. Os dois caminhos são anônimos e ficam
+  antes da autenticação, porque a política padrão exige token em toda rota.
+- **Consequência**: os contratos de referência continuam nos arquivos OpenAPI escritos à mão em
+  `contracts/`. Ainda falta um teste que compare o documento gerado com o contrato.

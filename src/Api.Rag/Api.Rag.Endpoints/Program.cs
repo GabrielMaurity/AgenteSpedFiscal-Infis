@@ -17,7 +17,8 @@ builder.Services
     .AddBaseInformacao()
     .AddErrosPadronizados()
     .AddAutenticacaoRag()
-    .AddSaude();
+    .AddSaude()
+    .AddDocumentacaoApi();
 
 // Sem estado: cada chamada é independente, o que simplifica autenticação e réplicas (ADR-0005).
 builder.Services
@@ -30,6 +31,7 @@ var app = builder.Build();
 app.UseMiddleware<CorrelacaoMiddleware>();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+app.UseDocumentacaoApi();
 app.UseAuthentication();
 app.UseAuthorization();
 

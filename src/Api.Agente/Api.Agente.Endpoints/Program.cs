@@ -24,6 +24,7 @@ builder.Services
     .AddAutenticacaoAgente()
     .AddLimitacaoRequisicoes()
     .AddSaude()
+    .AddDocumentacaoApi()
     .AddA2aAgente(builder.Configuration);
 
 // Campos nulos são omitidos: o contrato do envelope não aceita nulo em todos eles.
@@ -35,6 +36,7 @@ var app = builder.Build();
 app.UseMiddleware<CorrelacaoMiddleware>();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+app.UseDocumentacaoApi();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
