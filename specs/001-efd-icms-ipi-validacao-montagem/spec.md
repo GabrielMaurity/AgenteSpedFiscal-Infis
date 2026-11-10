@@ -61,6 +61,16 @@ deixou para a especificação."
   se sim, em qual formato? → A: Sim, em CSV, com uma linha por achado e os metadados da execução
   no cabeçalho.
 
+### Session 2026-11-05
+
+- Q: Como a spec deve tratar a lacuna de numeração de documentos, que não tem regra no Guia 3.2.4
+  nem na NT 2026.001? → A: A verificação fica condicional: só executa depois de confirmada em fonte
+  oficial e, até lá, permanece pendente no catálogo.
+- Q: Quais regras não verificadas devem impedir o status "concluído"? → A: Só dependências que podem
+  voltar (tabela de NCM, base de informação, IA). Regra pendente de fonte oficial e verificação que
+  depende de dado fora do arquivo vão para uma lista separada, "fora do alcance desta validação",
+  sempre visível, sem impedir "concluído" nem exigir revisão humana por si sós.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Validar a estrutura de um arquivo EFD ICMS/IPI (Priority: P1)
@@ -131,12 +141,15 @@ inconsistência de negócio conhecida, e verificar que cada uma é detectada com
 4. **Given** um documento `C100` cujo valor total diverge da soma dos itens (`C170`) ou do resumo
    analítico (`C190`) segundo a regra oficial de composição catalogada, **When** o arquivo é
    validado, **Then** o sistema aponta o documento, os valores comparados e a diferença.
-5. **Given** documentos fiscais de emissão própria de mesmo modelo e série com lacuna de numeração não justificada
-   por documento cancelado, denegado ou inutilizado informado no arquivo, **When** o arquivo é
-   validado, **Then** o sistema aponta a lacuna como advertência, com o intervalo faltante.
+5. **Given** a regra de lacuna de numeração ativa no catálogo, após confirmação em fonte oficial, e
+   documentos fiscais de emissão própria de mesmo modelo e série com lacuna não justificada por
+   documento cancelado, denegado ou inutilizado informado no arquivo, **When** o arquivo é
+   validado, **Then** o sistema aponta a lacuna como advertência, com o intervalo faltante;
+   **and when** a regra está pendente de confirmação, **Then** ela não é executada.
 6. **Given** uma regra que depende de dado ausente do arquivo (ex.: valores de CBS, IBS e IS que
    só constam do XML do documento fiscal), **When** o arquivo é validado sem esse dado, **Then** a
-   regra é listada como não realizada por "Ausência de evidências", e não como aprovada.
+   regra é listada como "fora do alcance desta validação", na categoria "Ausência de evidências", e
+   não como aprovada.
 
 ---
 
@@ -238,7 +251,7 @@ não gera duplicidade.
 - **Resposta do modelo de IA inválida após as retentativas**: devolver o relatório determinístico
   completo, com a análise da IA marcada como falha técnica.
 - **Regra candidata sem fonte oficial confirmada**: não executada; listada como pendente no
-  catálogo, nunca aplicada por inferência.
+  catálogo e como "fora do alcance desta validação" no resultado, nunca aplicada por inferência.
 - **Exercício de 2026 e Reforma Tributária**: conforme o Guia Prático 3.2.4 (Cap. I, Seção 10),
   CBS, IBS e IS integram o valor total do documento (ex.: campo 12 `VL_DOC` do `C100`) **exceto
   no exercício de 2026**, e nunca integram o valor da operação dos registros analíticos (ex.:
@@ -301,9 +314,11 @@ não gera duplicidade.
 - **FR-023**: O sistema DEVE verificar a coerência entre o valor total do documento (`C100`), a
   soma dos itens (`C170`) e o resumo analítico (`C190`), segundo a fórmula de composição da regra
   oficial catalogada, informando valores comparados e diferença.
-- **FR-024**: O sistema DEVE apontar como advertência as lacunas de numeração de documentos de
-  emissão própria, por modelo e série, que não estejam justificadas por documentos cancelados, denegados ou inutilizados
-  informados no arquivo.
+- **FR-024**: Depois que a regra for confirmada em fonte oficial e ativada no catálogo (FR-030), o
+  sistema DEVE apontar como advertência as lacunas de numeração de documentos de emissão própria,
+  por modelo e série, que não estejam justificadas por documentos cancelados, denegados ou
+  inutilizados informados no arquivo. Até lá, a regra DEVE permanecer pendente de confirmação e
+  NÃO DEVE ser executada. O Guia 3.2.4 e a NT 2026.001 não trazem essa regra.
 - **FR-025**: O sistema DEVE aplicar as diretrizes de convivência com CBS, IBS e IS do Guia
   Prático 3.2.4 (Cap. I, Seção 10): (a) a inclusão de CBS, IBS e IS no valor total do documento
   (ex.: `VL_DOC` do `C100`) NÃO DEVE ser exigida para períodos do exercício de 2026 e só DEVE ser
@@ -311,7 +326,7 @@ não gera duplicidade.
   CBS, IBS e IS no valor da operação dos registros analíticos (ex.: `VL_OPR` do `C190`) aplica-se
   a todos os períodos e modelos de documento. Verificações que dependam de valores de CBS, IBS e
   IS ausentes do arquivo (ex.: só constantes do XML do documento) DEVEM ser registradas como
-  "Ausência de evidências".
+  "Ausência de evidências", na lista "fora do alcance desta validação" (FR-044).
 - **FR-026**: Novas regras de negócio PODEM ser acrescentadas por inclusão no Catálogo de Regras,
   sem alteração desta especificação, desde que cumpram FR-030.
 
@@ -337,11 +352,17 @@ não gera duplicidade.
   encontrado, valor esperado, regra do catálogo, fonte oficial e ação corretiva sugerida.
 - **FR-044**: O resultado DEVE informar o status do processamento (concluído, concluído com
   limitações ou falha), as regras executadas, as validações não realizadas e o motivo de cada uma.
+  O status "concluído com limitações" DEVE ser usado quando uma etapa ou regra não executar por
+  dependência que pode voltar (tabela de NCM, base de informação, IA) ou por falha técnica. Regras
+  pendentes de fonte oficial e verificações que dependam de dado fora do arquivo DEVEM aparecer em
+  todo resultado em lista separada, "fora do alcance desta validação", com o motivo, e NÃO DEVEM
+  impedir o status "concluído". O status "concluído" não é declaração de conformidade (FR-045).
 - **FR-045**: O sistema NÃO DEVE declarar o arquivo conforme. Na ausência de achados, DEVE
   informar "sem achados nas regras implementadas" e que a validação oficial do PVA permanece
   obrigatória.
 - **FR-046**: O resultado DEVE indicar revisão humana necessária quando houver qualquer achado
-  impeditivo, advertência, indício da IA, ausência de evidências ou validação não realizada.
+  impeditivo, advertência, indício da IA, ausência de evidências ou validação não realizada. Os
+  itens da lista "fora do alcance desta validação" (FR-044) não exigem revisão humana por si sós.
 - **FR-047**: O resultado DEVE apresentar separadamente os achados determinísticos e a análise da
   IA, e a análise da IA NÃO DEVE alterar, remover ou rebaixar achados determinísticos.
 - **FR-048**: O usuário autorizado DEVE poder baixar o resultado de uma execução em CSV, com os
@@ -415,7 +436,10 @@ não gera duplicidade.
   confirmação).
 - **Achado**: resultado de uma regra ou análise; categoria (P-03), severidade, localização,
   valores, regra, evidências, ação corretiva.
-- **Validação não realizada**: regra ou etapa não executada e seu motivo.
+- **Validação não realizada**: regra ou etapa não executada por dependência que pode voltar ou
+  por falha técnica, e seu motivo.
+- **Item fora do alcance**: regra pendente de fonte oficial ou verificação que depende de dado fora
+  do arquivo, e seu motivo; não afeta o status do processamento.
 - **Documento**: documento da base de informação; classificação ("oficial" ou "interno"), tipo,
   origem, identificação, versão, vigência, data de ingestão, status.
 - **Trecho**: parte de um documento; documento, versão, classificação e localização.

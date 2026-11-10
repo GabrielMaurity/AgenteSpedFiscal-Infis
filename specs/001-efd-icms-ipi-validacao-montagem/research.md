@@ -1,6 +1,6 @@
 # Research: Validação da EFD ICMS/IPI (SPED Fiscal)
 
-**Feature**: [spec.md](spec.md) | **Plan**: [plan.md](plan.md) | **Date**: 2026-10-29
+**Feature**: [spec.md](spec.md) | **Plan**: [plan.md](plan.md) | **Date**: 2026-10-29 (R-30 a R-36: 2026-11-10)
 
 Cada item registra **Decisão**, **Justificativa** e **Alternativas consideradas**. Versões exatas de
 pacotes são fixadas em `Directory.Packages.props` no início da implementação (última versão
@@ -355,3 +355,83 @@ Itens marcados com **ADR** DEVEM ser registrados em `docs/adr/` antes da tarefa 
 - **Justificativa**: coerente com FR-082 e com o novo caso de borda da spec; impede respostas
   inventadas sobre o conteúdo do arquivo (P-13).
 - **Alternativas**: reter o arquivo para conversas (contraria a retenção decidida).
+
+## R-30 — Itens fora do alcance desta validação (clarify de 2026-11-05)
+
+- **Decisão**: o resultado ganha a lista `foraDoAlcance[]` ({referencia, categoria, motivo}),
+  separada de `validacoesNaoRealizadas[]`. Vão para ela as regras `pendente_confirmacao`
+  aplicáveis ao período e as regras ativas cujo `dependeDe` não pode ser atendido pelo arquivo
+  (`xml:documento`). Em `validacoesNaoRealizadas[]` ficam só as dependências que podem voltar
+  (`tabela:ncm`, base de informação, IA) e as falhas técnicas. `concluida` passa a exigir
+  `validacoesNaoRealizadas` vazia e análise da IA aceita; `foraDoAlcance` não entra nessa conta
+  nem em `revisaoHumanaNecessaria`. O `avisoPva` continua obrigatório (FR-044 a FR-046).
+- **Contrato**: envelope 1.1.0 com `foraDoAlcance` opcional e `versaoContrato` aceitando `1.0.0`
+  durante a transição; a tarefa que implementar torna o campo obrigatório e retira o `1.0.0`. O
+  CSV ganha linhas `# foraDoAlcance;<referencia>;<categoria>;<motivo>` (contrato CSV 1.1.0).
+- **Justificativa**: sem a separação, `EFD-NEG-008` e `EFD-NEG-009` impediam `concluida` em
+  praticamente todo arquivo, e o status deixava de distinguir dependência fora do ar de limite
+  permanente. Nada é omitido: os itens continuam em todo resultado (P-04).
+- **Alternativas**: manter tudo em `validacoesNaoRealizadas` (status sem utilidade); omitir as
+  regras pendentes do resultado (esconde limite da validação, contraria P-04).
+
+## R-31 — Lacuna de numeração condicional à fonte oficial (FR-024)
+
+- **Decisão**: `EFD-NEG-008` fica no catálogo como `pendente_confirmacao`, com `origemCandidata`,
+  e o motor só instancia a regra quando ela estiver ativa. A lógica cobre o `C100` de emissão
+  própria, por modelo e série, contando cancelados, denegados e inutilizados informados.
+- **Justificativa**: o Guia 3.2.4 e a NT 2026.001 não trazem essa regra, e o Guia dispensa
+  informar denegados e inutilizados desde 12/2021 (registro C100, p. 63): executar sem fonte
+  violaria P-01 e geraria alertas indevidos.
+- **Alternativas**: remover a regra (perde o trabalho pronto); executar como aviso interno (exige
+  desvio de P-01).
+
+## R-32 — Severidade das regras de negócio
+
+- **Decisão**: `impeditiva` quando o Guia traz validação explícita do campo ou registro;
+  `advertencia` quando a regra é indireta ou o Guia tem textos conflitantes (`EFD-NEG-003`, `005`
+  e `006`). A comparação com o PVA (T108, SC-002) confirma ou corrige cada severidade no catálogo.
+- **Justificativa**: o Guia não diz quais validações o PVA trata como erro ou advertência; uma
+  impeditiva indevida bloqueia o analista sem motivo.
+- **Alternativas**: tudo impeditivo (falsos bloqueios); tudo advertência (perde o sinal dos erros
+  que impedem a transmissão).
+
+## R-33 — Exceções de obrigatoriedade por situação do documento
+
+- **Decisão**: o leiaute guarda, por registro, `excecoesObrigatoriedade[]` ({situacoes,
+  camposObrigatorios, fonte}) para os casos em que o Guia exige só parte dos campos conforme o
+  `COD_SIT`: `C100`, `C500`, `D100`, `D400`, `D500`, `D700` e `1500`. O extrator gera esses dados a
+  partir de uma tabela revisada contra o Guia; o validador de campos aplica a exceção da situação
+  informada na linha.
+- **Justificativa**: sem isso, documento cancelado gerava falso erro de campo obrigatório vazio;
+  dados com fonte mantêm a regra fora do código (P-01, R-05).
+- **Alternativas**: tratar `C100` no código (não cobre os demais registros e esconde a fonte).
+
+## R-34 — Formato da tabela de NCM importada (FR-063)
+
+- **Decisão**: o importador aceita JSON com a lista `Nomenclaturas` (campos `Codigo`,
+  `Descricao`, `Data_Inicio`, `Data_Fim`) e texto delimitado por `;`, `|` ou tabulação (código,
+  descrição e, opcionalmente, início e fim da vigência), em UTF-8 ou ISO 8859-1. Só códigos de 8
+  dígitos são gravados; `31/12/9999` vale como sem fim de vigência.
+- **Pendência**: o formato ainda não foi conferido em arquivo oficial. Ao obter a tabela (tabelas
+  do PVA ou publicação oficial de NCM), ajustar o leitor e registrar a fonte usada.
+- **Alternativas**: um único formato fixo (depende de uma fonte ainda não obtida).
+
+## R-35 — Registros obrigatórios ausentes e obrigatoriedade por perfil
+
+- **Situação**: em aberto. A pergunta do clarify de 2026-11-05 ficou sem resposta. Hoje um
+  arquivo sem `E100`, `E110` ou `1010` passa sem achado, e o campo `obrigatoriedadePorPerfil` do
+  data-model não foi implementado.
+- **Opções levantadas**: (A) achado impeditivo conforme o perfil, com base na tabela do Guia
+  (Cap. III, Seção 5), carregada como dados no leiaute, opção recomendada; (B) só os registros
+  obrigatórios para todos os contribuintes; (C) deixar na lista `foraDoAlcance`.
+- **Próximo passo**: decidir em `/speckit-clarify` antes de `/speckit-tasks`; a decisão muda o
+  leiaute e o extrator.
+
+## R-36 — Documentação interativa da API (Swagger)
+
+- **Decisão**: não adotada nesta etapa, por decisão do usuário. Os contratos REST continuam nos
+  arquivos OpenAPI escritos à mão em `contracts/`.
+- **Consequência**: não há verificação automática de que a API implementada segue o YAML, e o
+  YAML não foi validado por parser. Revisitar no polimento: documento gerado pelo
+  `Microsoft.AspNetCore.OpenApi`, tela só em desenvolvimento e teste que compara o documento
+  gerado com o contrato.

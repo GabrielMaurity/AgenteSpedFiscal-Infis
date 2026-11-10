@@ -156,7 +156,12 @@ paths:
       parameters:
         - { name: status, in: query, schema: { enum: [ativa, pendente_confirmacao, revogada] } }
       responses:
-        "200": { description: "Regras (catalogo-regras.schema.json#/$defs/regra)" }
+        "200":
+          description: Regras no formato de catalogo-regras.schema.json#/$defs/regra, sem campos calculados
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "catalogo-regras.schema.json#/$defs/regra" } }
+        "400": { $ref: "#/components/responses/Problema", description: "status fora da lista" }
   /api/v1/tabelas-referencia/ncm:
     post:
       summary: Importa versão da tabela oficial de NCM (FR-063)
@@ -174,19 +179,50 @@ paths:
                 versao: { type: string }
                 vigenciaInicio: { type: string, format: date }
                 vigenciaFim: { type: string, format: date }
+      description: >
+        Aceita JSON com a lista Nomenclaturas (Codigo, Descricao, Data_Inicio, Data_Fim) ou texto
+        delimitado por ";", "|" ou tabulação; só códigos de 8 dígitos são gravados (research R-34).
+        Limite de 50 MB.
       responses:
-        "201": { description: Importada }
-        "409": { description: "Mesma versão já importada (sem duplicidade)" }
+        "201":
+          description: Importada
+          headers:
+            Location: { schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TabelaNcm" }
+        "400": { $ref: "#/components/responses/Problema", description: "Campos ausentes, datas inválidas ou arquivo sem códigos de 8 dígitos" }
+        "409": { $ref: "#/components/responses/Problema", description: "Mesma versão já importada (sem duplicidade)" }
+        "413": { $ref: "#/components/responses/Problema" }
+        "415": { $ref: "#/components/responses/Problema" }
     get:
-      summary: Lista versões importadas
+      summary: Lista versões importadas, da vigência mais recente para a mais antiga
       x-papeis: [admin_base, analista]
       responses:
-        "200": { description: Versões }
+        "200":
+          description: Versões
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/TabelaNcm" } }
   /health/live:
     get: { security: [], summary: Liveness, responses: { "200": { description: OK } } }
   /health/ready:
     get: { security: [], summary: Readiness (MongoDB, PostgreSQL), responses: { "200": { description: OK }, "503": { description: Indisponível } } }
 components:
+  schemas:
+    TabelaNcm:
+      type: object
+      required: [id, origem, versao, vigenciaInicio, sha256, importadoEm, importadoPor, quantidadeCodigos]
+      properties:
+        id: { type: string, format: uuid }
+        origem: { type: string }
+        versao: { type: string }
+        vigenciaInicio: { type: string, format: date }
+        vigenciaFim: { type: [string, "null"], format: date }
+        sha256: { type: string, pattern: "^[a-f0-9]{64}$" }
+        importadoEm: { type: string, format: date-time }
+        importadoPor: { type: string }
+        quantidadeCodigos: { type: integer, minimum: 1 }
   securitySchemes:
     bearer: { type: http, scheme: bearer, bearerFormat: JWT }
   responses:

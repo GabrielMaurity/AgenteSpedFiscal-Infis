@@ -1,6 +1,6 @@
 # Implementation Plan: Validação da EFD ICMS/IPI (SPED Fiscal)
 
-**Branch**: `001-efd-icms-ipi-validacao-montagem` | **Date**: 2026-10-29 | **Spec**: [spec.md](spec.md)
+**Branch**: `001-efd-icms-ipi-validacao-montagem` | **Date**: 2026-10-29 (revisado em 2026-11-10) | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `/specs/001-efd-icms-ipi-validacao-montagem/spec.md`
 
@@ -8,7 +8,7 @@
 
 ## Summary
 
-Pré-validador de arquivos EFD ICMS/IPI (períodos a partir de 01/2026, até 500 MB) com base de
+Pré-validador de arquivos EFD ICMS/IPI (leiaute `020`, períodos de 2026, até 500 MB) com base de
 informação consultável (documentos oficiais, a começar pelo Guia Prático 3.2.4, e material interno
 da Infis, sempre classificados). O agente não gera arquivos SPED. O resultado pode ser baixado em
 CSV. A `Api.Agente` recebe o arquivo em streaming, executa de forma
@@ -19,6 +19,11 @@ Semantic Kernel e saída estruturada estrita, apenas para explicar achados e apo
 estrutura do Guia e faz busca híbrida (pgvector + texto) filtrada por versão e classificação; as
 respostas sinalizam a origem de cada citação (R-27). Tudo roda em Docker com PostgreSQL/pgvector e MongoDB.
 Decisões em [research.md](research.md).
+
+**Situação em 2026-11-10**: US1 (validação estrutural) e US2 (regras de negócio e tabela de NCM)
+implementadas. Esta revisão incorpora o clarify de 2026-11-05 e a constitution 2.0.1: lacuna de
+numeração condicional à fonte oficial (R-31) e lista separada de itens fora do alcance, que não
+impede `concluida` (R-30). Ainda não implementado: R-30 e as histórias US4 e US3.
 
 ## Technical Context
 
@@ -59,16 +64,20 @@ Guia; múltiplas organizações isoladas por `org_id`.
 Leiaute (item 3.1.1) e define a codificação ISO 8859-1 (item 2.1.1). Não há bloqueio externo nem
 itens NEEDS CLARIFICATION técnicos em aberto.
 
+**Pendências externas e decisões em aberto**: tabela oficial de NCM e tabelas do PVA ainda não
+obtidas (R-34); obrigatoriedade de registros por perfil sem decisão (R-35), a resolver em
+`/speckit-clarify` antes de gerar tarefas para ela; severidades a confirmar contra o PVA (R-32).
+
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
 | Princípio | Como o plano atende | Pré | Pós |
 |---|---|---|---|
-| P-01 Fontes oficiais | Catálogo com `fonte` obrigatória validada no build e restrita à lista `fontesOficiais` (R-06, R-27); leiaute com fonte por registro (R-05); material interno nunca é fonte de regra | ✅ | ✅ |
+| P-01 Fontes oficiais | Catálogo com `fonte` obrigatória validada no build e restrita à lista `fontesOficiais` (R-06, R-27); leiaute com fonte por registro e por exceção de obrigatoriedade (R-05, R-33); regra sem fonte fica pendente e não executa (R-31); material interno nunca é fonte de regra | ✅ | ✅ |
 | P-02 Determinismo antes do LLM | Motor de validação sem LLM; LLM não emite achados determinísticos (R-10); sem XSD | ✅ | ✅ |
 | P-03 Categorias | Enum fechado no envelope e regras `if/then` de origem (contracts) | ✅ | ✅ |
-| P-04 Sem conformidade com pendências | `concluida` só sem pendências; `avisoPva` constante; teste com `api-rag` parado (quickstart §5) | ✅ | ✅ |
+| P-04 Sem conformidade com pendências | `concluida` só sem validações não realizadas e com a análise da IA aceita; itens permanentes em `foraDoAlcance`, sempre listados (R-30); `avisoPva` constante; teste com `api-rag` parado (quickstart §5) | ✅ | ✅ |
 | P-05 Fluxo de 9 etapas | `etapas[]` 1–9 na execução e no envelope; interrupção nas etapas 1–4 | ✅ | ✅ |
 | P-06 (revogado na 2.0.0) | Geração de SPED fora do escopo (constitution 1.3) | N/A | N/A |
 | P-07 Fronteiras e dados | MCP como único canal funcional; bancos e credenciais separados (R-19); NCM na Api.Agente (R-20) | ✅ | ✅ |
@@ -88,12 +97,16 @@ itens NEEDS CLARIFICATION técnicos em aberto.
 | P-21 Especificação antes | spec + clarificações concluídas; ADRs listados abaixo antes das tarefas correspondentes | ✅ | ✅ |
 | P-22 Testes | Suíte determinística sem OpenAI; fixtures com gabarito; evals separados (R-24) | ✅ | ✅ |
 
-**Resultado**: aprovado, sem violações. Itens de complexidade justificados abaixo.
+**Resultado**: aprovado, sem violações. Itens de complexidade justificados abaixo. Reavaliado em
+2026-11-10 com R-30 a R-36: continua aprovado. A lista `foraDoAlcance` não reduz a P-04, porque
+`concluida` não é declaração de conformidade, os itens aparecem em todo resultado e o `avisoPva`
+continua obrigatório.
 
-**Alinhamento com a constitution 2.0.0**: a P-06 (geração) foi revogada e a seção 1.3 proíbe
+**Alinhamento com a constitution 2.0.0 e 2.0.1**: a P-06 (geração) foi revogada e a seção 1.3 proíbe
 gerar, corrigir, assinar ou transmitir SPED, o que coincide com o escopo desta feature. A P-09
 passou a exigir a classificação oficial/interno, já atendida por R-27, pelo data-model e pelos
-contratos.
+contratos. A 2.0.1 só atualizou D-03 e D-05 (NT 2026.001 recebida, leiaute `020`, ISO 8859-1),
+o que o plano já seguia.
 
 **ADRs a registrar** (em `docs/adr/`, antes da tarefa correspondente): ADR-0001 MongoDB para
 memória e execuções; ADR-0002 embeddings e busca híbrida; ADR-0003 modelo de análise (após evals);
