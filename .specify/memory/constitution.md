@@ -654,9 +654,9 @@ Itens abaixo NÃO são requisitos aprovados. Cada um DEVE ser resolvido na etapa
 |---|---|---|
 | D-01 | ~~MongoDB ou Redis para memória conversacional~~ **Resolvida em 1.1.0: MongoDB** | ADR de registro antes da implementação |
 | D-02 | Modelos da OpenAI para análise e embeddings; dimensão dos vetores | Plano técnico + ADR |
-| D-03 | ~~Inventário de fontes oficiais, tipos de SPED e versões de layout suportados~~ **Resolvida na spec 001: EFD ICMS/IPI, leiaute vigente, períodos a partir de 01/2026; Guia Prático 3.2.4 recebido; Nota Técnica do Ato COTEPE/ICMS nº 44/2018 pendente de obtenção** | Novas versões por especificação |
+| D-03 | ~~Inventário de fontes oficiais, tipos de SPED e versões de layout suportados~~ **Resolvida na spec 001: EFD ICMS/IPI, leiaute `020` (versão 119), períodos de 2026 (`DT_FIN` de 01/01/2026 a 31/12/2026); fontes: Guia Prático 3.2.4 e Nota Técnica EFD ICMS IPI 2026.001 v1.0 (Ato COTEPE/ICMS nº 44/2018), ambos recebidos; tabelas do PVA pendentes** | Novas versões por especificação (próxima: leiaute `021`, de 2027) |
 | D-04 | ~~Escopo da produção de SPED Fiscal~~ **Resolvida em 2.0.0: geração fora do escopo (seção 1.3)** | — |
-| D-05 | ~~Limites de tamanho, formatos e codificações aceitos~~ **Resolvida na spec 001: `.txt` delimitado por pipe, até 500 MB configurável; codificação conforme Nota Técnica** | — |
+| D-05 | ~~Limites de tamanho, formatos e codificações aceitos~~ **Resolvida na spec 001: `.txt` delimitado por pipe, até 500 MB configurável; codificação ISO 8859-1 e linhas terminadas em CR e LF (NT 2026.001, item 2.1.1)** | — |
 | D-06 | Segmentação, sobreposição, topK, limiares e estratégia de busca | Plano técnico, após avaliação (P-10) |
 | D-07 | Autenticação e autorização (clientes, REST, MCP, A2A) e multi-organização | ADR antes da primeira API exposta |
 | D-08 | Retenção, expiração e exclusão de arquivos, memória, logs e consumo. **Parcial (spec 001): arquivo descartado ao fim do processamento; hash, metadados e resultado por 90 dias com exclusão sob demanda.** Pendentes: memória, logs e consumo | Plano técnico, com avaliação LGPD |
@@ -673,4 +673,4 @@ Itens abaixo NÃO são requisitos aprovados. Cada um DEVE ser resolvido na etapa
 | D-19 | Frameworks de testes e de avaliação de LLM/RAG | Plano técnico |
 | D-20 | Papéis responsáveis por aprovar alterações e desvios | Governança, antes da primeira emenda |
 
-**Version**: 2.0.0 | **Ratified**: 2026-10-29 | **Last Amended**: 2026-10-29
+**Version**: 2.0.1 | **Ratified**: 2026-10-29 | **Last Amended**: 2026-11-10
