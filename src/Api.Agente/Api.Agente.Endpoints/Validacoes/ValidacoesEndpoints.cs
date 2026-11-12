@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
+using Microsoft.AspNetCore.OpenApi;
+using Microsoft.OpenApi;
 
 namespace Api.Agente.Endpoints.Validacoes;
 
@@ -27,13 +29,55 @@ public static class ValidacoesEndpoints
     {
         var grupo = rotas.MapGroup("/api/v1/validacoes");
 
-        grupo.MapPost("/", EnviarAsync).RequireAuthorization(Politicas.AnalistaOuAgente).RequireRateLimiting(LimitacaoRequisicoesExtensions.PoliticaPorOrganizacao);
+        grupo.MapPost("/", EnviarAsync)
+            .RequireAuthorization(Politicas.AnalistaOuAgente)
+            .RequireRateLimiting(LimitacaoRequisicoesExtensions.PoliticaPorOrganizacao)
+            .AddOpenApiOperationTransformer(DescreverFormulario)
+            .Produces(StatusCodes.Status202Accepted)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status413PayloadTooLarge)
+            .ProducesProblem(StatusCodes.Status415UnsupportedMediaType)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests);
         grupo.MapGet("/", ListarAsync).RequireAuthorization(Politicas.Analista);
         grupo.MapGet("/{execucaoId:guid}", ObterAsync).RequireAuthorization(Politicas.AnalistaOuAgente);
         grupo.MapDelete("/{execucaoId:guid}", ExcluirAsync).RequireAuthorization(Politicas.Analista);
         grupo.MapGet("/{execucaoId:guid}/exportacao.csv", ExportarAsync).RequireAuthorization(Politicas.Analista);
 
         return rotas;
+    }
+
+    /// <summary>
+    /// Descreve o multipart só no documento OpenAPI, para o Swagger mostrar o campo do arquivo (research
+    /// R-36). O endpoint lê o arquivo em fluxo, sem model binding. Não usar Accepts: ele também restringe
+    /// o roteamento por Content-Type e devolveria 415 antes do limite de requisições.
+    /// </summary>
+    private static Task DescreverFormulario(OpenApiOperation operacao, OpenApiOperationTransformerContext contexto, CancellationToken cancelamento)
+    {
+        operacao.RequestBody = new OpenApiRequestBody
+        {
+            Required = true,
+            Content = new Dictionary<string, OpenApiMediaType>
+            {
+                ["multipart/form-data"] = new()
+                {
+                    Schema = new OpenApiSchema
+                    {
+                        Type = JsonSchemaType.Object,
+                        Required = new HashSet<string> { CampoArquivo },
+                        Properties = new Dictionary<string, IOpenApiSchema>
+                        {
+                            [CampoArquivo] = new OpenApiSchema
+                            {
+                                Type = JsonSchemaType.String,
+                                Format = "binary",
+                                Description = "Arquivo da EFD ICMS/IPI em texto (.txt), como gerado para o PVA.",
+                            },
+                        },
+                    },
+                },
+            },
+        };
+        return Task.CompletedTask;
     }
 
     public static string Organizacao(ClaimsPrincipal usuario) => usuario.FindFirstValue(AutenticacaoExtensions.ClaimOrganizacao)!;

@@ -437,6 +437,8 @@ Itens marcados com **ADR** DEVEM ser registrados em `docs/adr/` antes da tarefa 
   antes da autenticação, porque a política padrão exige token em toda rota.
 - **Consequência**: os contratos de referência continuam nos arquivos OpenAPI escritos à mão em
   `contracts/`. Ainda falta um teste que compare o documento gerado com o contrato.
+- **Revisão**: fora de `Development`, o Swagger passa a depender de `DocumentacaoApi:Habilitada`
+  (research R-40).
 
 ## R-37 — Execução local pelo Visual Studio: configuração e autenticação (2026-11-10)
 
@@ -490,3 +492,22 @@ Itens marcados com **ADR** DEVEM ser registrados em `docs/adr/` antes da tarefa 
   maior trecho do Guia 3.2.4 tem cerca de 3.844 tokens, então o Guia não muda (723 trechos).
 - **Material de terceiros**: o PDF de erros comuns do blog TecnoSpeed entrou como `interno`
   (`material_interno`), porque não é norma; respostas que o usam continuam sinalizadas.
+
+## R-40 — Swagger em produção com documentação pública (2026-11-12)
+
+- **Decisão (pedido do usuário, opção A da proposta)**: fora de `Development`, `/swagger` e
+  `/openapi/v1.json` são publicados só com `DocumentacaoApi:Habilitada = true` (padrão: ligado em
+  `Development`, desligado nos demais). A documentação é anônima; todos os endpoints continuam exigindo
+  token, colado pelo botão **Authorize** (esquema Bearer). Ligado nos dois projetos do Vercel para
+  demonstração; desligar é remover a variável e republicar, sem mudar código.
+- **Ajustes**: o documento sai sem `servers`, para o Swagger chamar a origem da própria página (atrás do
+  proxy do Vercel a aplicação veria `http` e o navegador bloquearia as chamadas como conteúdo misto);
+  `persistAuthorization` mantém o token no navegador de quem usa ao recarregar; o título mostra o ambiente.
+  O upload da validação aparece por um transformador de operação, e não por `Accepts`, que também
+  restringiria o roteamento por `Content-Type` e responderia 415 antes do limite de requisições.
+- **Risco aceito**: qualquer pessoa vê rotas, campos e esquemas (a "planta" da API), sem acesso a dados.
+  O "Try it out" executa chamadas reais em produção, inclusive `DELETE` e ingestão, para quem tiver token
+  com o papel. Corpo limitado a 4,5 MB e 300 s pelo Vercel Hobby.
+- **Alternativas**: documentação protegida por token (o Swagger UI não envia o token do Authorize ao
+  buscar o documento, exigiria interceptor próprio ou proteção do Vercel); manter só local (exige Postman
+  ou PowerShell em produção).

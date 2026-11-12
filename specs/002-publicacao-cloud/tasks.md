@@ -51,6 +51,10 @@ Evidências nas URLs públicas: health live/ready 200 nas duas APIs (Neon e Atla
 
 **Novos documentos em produção (2026-11-12)**: ingeridos pela URL pública com o token admin. Blog TecnoSpeed (interno, 2 trechos) ativo de primeira. Manual Consolidado MG v.2025.02 (2,5 MB, 186 páginas, oficial/`outro_oficial`) falhou: a OpenAI recusou com 400 trechos acima de 8.191 tokens; com o teto de 4.000 tokens por trecho (research R-39) foi reprocessado e ficou ativo com 85 trechos em cerca de 10 s. A busca passou a incluir outros tipos oficiais: a pergunta sobre o FEM em MG citou o manual MG (oficial, proximidade 0,6844); a de erros comuns citou o blog (interno) e trechos oficiais; a do IBS no VL_DOC seguiu no Guia 3.2.4 (Cap. I, Seção 10). Suíte: 494 testes aprovados.
 
+- [X] T022 [M] Swagger em produção (research R-40): `DocumentacaoApi__Habilitada=true` nos dois projetos, republicar e conferir `/swagger` 200 sem token, `/openapi/v1.json` sem `servers`, endpoints 401 sem token e chamada pelo Authorize com token de teste
+
+**Swagger em produção (2026-11-12)**: `DocumentacaoApi__Habilitada=true` nos dois projetos e as duas APIs republicadas. Nas URLs públicas: `/swagger` e `/openapi/v1.json` 200 sem token, documento sem `servers`, tela "Api.Agente (Production)" com o botão Authorize; `/api/v1/regras` e `/api/v1/documentos` 401 sem token e 200 com os tokens de teste; o envio da validação mostra o campo `arquivo`. `docs/exemplos/sped-ficticio-com-erros-2026-01.txt` validado em produção: 7 achados, análise da IA aceita (gpt-4.1-mini, 2 tentativas) citando o Guia Prático, `concluida_com_limitacoes` por EFD-NEG-003, 33 s do `202` ao fim. A data inválida (32/01/2026), que nenhuma regra cobre, não foi apontada pela IA.
+
 **Pendências**: importar a tabela de NCM no Neon; T019 a T021.
 
 ## Phase 5: Aceite

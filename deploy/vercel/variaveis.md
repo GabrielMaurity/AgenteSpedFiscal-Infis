@@ -22,6 +22,7 @@ no Git, em Dockerfile ou em log. Rotacionar qualquer valor que vazar.
 | `Limites__TamanhoMaximoArquivoBytes` | `4000000` (abaixo do limite de 4,5 MB do Vercel) | não |
 | `Recuperacao__InstanciaUnica` | `false` (várias instâncias: só recupera execuções paradas além do limiar) | não |
 | `Recuperacao__LimiarMinutos` | `10` (acima dos 300 s do Vercel) | não |
+| `DocumentacaoApi__Habilitada` | `true` publica `/swagger` e `/openapi/v1.json` sem token; endpoints seguem exigindo token (research R-40). Remover para desligar | não |
 | `Authentication__Schemes__Bearer__ValidIssuer` | emissor dos tokens | não |
 | `Authentication__Schemes__Bearer__ValidAudiences__0` | `api-agente` | não |
 | `Authentication__Schemes__Bearer__SigningKeys__0__Issuer` | o mesmo emissor | não |
@@ -36,6 +37,7 @@ no Git, em Dockerfile ou em log. Rotacionar qualquer valor que vazar.
 | `Persistencia__AplicarMigracoesNaInicializacao` | `false` | não |
 | `OpenAi__ApiKey` | chave da OpenAI (embeddings) | **sim** |
 | `Ingestao__TamanhoMaximoArquivoBytes` | `4000000` | não |
+| `DocumentacaoApi__Habilitada` | `true` (research R-40) | não |
 | `Recuperacao__InstanciaUnica` | `false` | não |
 | `Recuperacao__LimiarMinutos` | `10` | não |
 | `Authentication__Schemes__Bearer__ValidIssuer` | emissor dos tokens | não |
