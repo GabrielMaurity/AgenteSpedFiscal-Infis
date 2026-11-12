@@ -1,0 +1,22 @@
+# Arquivos que o `vercel deploy` (deploy/vercel/publicar.ps1) NUNCA envia ao Vercel.
+# Segredos locais (P-19): o .env do Docker e qualquer configuração local.
+.env
+.env.*
+!.env.example
+**/appsettings.Development.json
+**/appsettings.*.local.json
+**/secrets.json
+*.pfx
+*.key
+
+# Builds, ferramentas e dados locais que não entram na imagem.
+**/bin/
+**/obj/
+TestResults/
+.git/
+.vs/
+.vscode/
+.idea/
+.claude/
+.specify/
+docker/pgadmin/

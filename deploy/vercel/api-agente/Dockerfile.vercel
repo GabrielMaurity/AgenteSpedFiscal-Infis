@@ -1,0 +1,19 @@
+# Publicação da Api.Agente no Vercel (Container Runtime, beta). Contexto de build: raiz do repositório.
+# O script deploy/vercel/publicar.ps1 copia este arquivo para a raiz como Dockerfile.vercel antes do deploy.
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+COPY Directory.Build.props Directory.Packages.props .editorconfig ./
+COPY data/ data/
+COPY src/ src/
+# Schemas da saída estruturada do LLM, embutidos como recurso (research R-09).
+COPY specs/001-efd-icms-ipi-validacao-montagem/contracts/llm-*.schema.json specs/001-efd-icms-ipi-validacao-montagem/contracts/
+RUN dotnet publish src/Api.Agente/Api.Agente.Endpoints/Api.Agente.Endpoints.csproj -c Release -o /app/publish /p:UseAppHost=false
+
+# Imagem com shell (não chiseled) para ler a PORT definida pela plataforma.
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+ENV ASPNETCORE_ENVIRONMENT=Production \
+    Arquivos__DiretorioTemporario=/tmp/agente-uploads
+USER $APP_UID
+CMD ["sh", "-c", "export ASPNETCORE_URLS=\"http://0.0.0.0:${PORT:-8080}\"; exec dotnet Api.Agente.Endpoints.dll"]
