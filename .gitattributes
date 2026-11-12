@@ -5,3 +5,4 @@
 
 # Fixtures EFD: CR e LF fazem parte do formato validado (NT 2026.001, item 2.1.1).
 tests/fixtures/efd/*.txt -text
+docs/exemplos/*.txt -text
