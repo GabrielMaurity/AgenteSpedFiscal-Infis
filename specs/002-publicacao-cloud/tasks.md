@@ -47,7 +47,9 @@ Evidências nas URLs públicas: health live/ready 200 nas duas APIs (Neon e Atla
 
 **Correção encontrada em produção**: a `proximidade` vinha 0 quando o modelo relia um trecho por `obter_trecho` (sem consulta), que sobrescrevia a similaridade. `ContextoRecuperacao.Registrar` passou a preservar a primeira similaridade conhecida; testes em `ContextoRecuperacaoTests`.
 
-**Pendências**: logs da aplicação não aparecem nos Runtime Logs do Vercel (só há exportação OTLP); importar a tabela de NCM no Neon; T019 a T021.
+**Logs (2026-11-12)**: sem OTLP, as APIs passam a escrever cada log no stdout como uma linha JSON (timestamp, nível, categoria, mensagem, traceId, exceção), depois do mascaramento e de forma síncrona (`ExportadorLogConsole`, `ObservabilidadeExtensions.ConfigurarLogs`; testes `LogConsoleTests` nas duas APIs). EF Core, `HttpClient` e Polly em Warning: uma conversa caiu de cerca de 100 para 15 linhas nos Runtime Logs; varredura sem CNPJ, linha EFD, token ou chave.
+
+**Pendências**: importar a tabela de NCM no Neon; T019 a T021.
 
 ## Phase 5: Aceite
 

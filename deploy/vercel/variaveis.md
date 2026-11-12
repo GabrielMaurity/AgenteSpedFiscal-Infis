@@ -45,8 +45,10 @@ no Git, em Dockerfile ou em log. Rotacionar qualquer valor que vazar.
 
 ## Observações
 
-- `OTEL_EXPORTER_OTLP_ENDPOINT` fica **sem valor**: sem ele, o OTLP não é ativado e os logs vão
-  para o stdout, visíveis nos Runtime Logs do Vercel.
+- `OTEL_EXPORTER_OTLP_ENDPOINT` fica **sem valor**: sem ele, o OTLP não é ativado e os logs saem
+  no stdout, uma linha JSON por registro e já mascarados (P-18), visíveis nos Runtime Logs do Vercel
+  (`vercel logs <domínio> --scope csc-5b6f`). `Observabilidade__Console=true` força a saída no console
+  mesmo com OTLP. EF Core, `HttpClient` e Polly ficam em Warning no `appsettings.json`.
 - A chave simétrica e os tokens emitidos à mão servem só para a demonstração. Produção depende do
   provedor OIDC do ADR-0004.
 - Em execução, use o host **pooled** do Neon (com `-pooler`), recomendado para serverless (skill
