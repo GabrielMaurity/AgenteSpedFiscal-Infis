@@ -98,7 +98,8 @@ public sealed class ConsultaBase(
         ParaContrato(t.Documento.Classificacao),
         new DocumentoResumo(t.Documento.Id, t.Documento.Titulo, t.Documento.Versao, t.Documento.TipoDocumento),
         new LocalizacaoContrato(t.Localizacao.Capitulo, t.Localizacao.Secao, t.Localizacao.Registro, t.Localizacao.PaginaInicio, t.Localizacao.PaginaFim),
-        t.Pontuacao);
+        t.Pontuacao,
+        t.Similaridade);
 
     private static ClassificacaoDocumento ParaDominio(Classificacao c) =>
         c == Classificacao.Oficial ? ClassificacaoDocumento.Oficial : ClassificacaoDocumento.Interno;

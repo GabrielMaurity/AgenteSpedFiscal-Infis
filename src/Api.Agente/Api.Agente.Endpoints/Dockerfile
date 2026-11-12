@@ -4,6 +4,8 @@ WORKDIR /src
 COPY Directory.Build.props Directory.Packages.props .editorconfig ./
 COPY data/ data/
 COPY src/ src/
+# Schemas da saída estruturada do LLM, embutidos como recurso no build.
+COPY specs/001-efd-icms-ipi-validacao-montagem/contracts/llm-analise.schema.json specs/001-efd-icms-ipi-validacao-montagem/contracts/llm-conversa.schema.json specs/001-efd-icms-ipi-validacao-montagem/contracts/
 RUN dotnet publish src/Api.Agente/Api.Agente.Endpoints/Api.Agente.Endpoints.csproj -c Release -o /app/publish
 RUN mkdir -p /uploads
 

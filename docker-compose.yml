@@ -72,6 +72,8 @@ services:
       MongoDb__Database: agente
       Persistencia__AplicarMigracoesNaInicializacao: "true"
       McpRag__Url: http://api-rag:8081/mcp
+      # Token de serviço com audiência api-rag; sem ele a consulta à base fica como falha técnica.
+      McpRag__TokenServico: ${MCP_RAG_TOKEN_SERVICO:-}
       OpenAi__ApiKey: ${OPENAI_API_KEY:?defina no .env}
       OpenAi__ModeloAnalise: ${OPENAI_MODELO_ANALISE:?defina no .env}
       Arquivos__DiretorioTemporario: /var/tmp/uploads

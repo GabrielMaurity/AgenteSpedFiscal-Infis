@@ -31,6 +31,8 @@ public sealed class FilaIngestao : IFilaIngestao
 public sealed partial class ProcessadorIngestao(
     FilaIngestao fila,
     IServiceScopeFactory escopos,
+    IOptions<RecuperacaoOpcoes> recuperacao,
+    TimeProvider relogio,
     ILogger<ProcessadorIngestao> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -57,7 +59,11 @@ public sealed partial class ProcessadorIngestao(
         try
         {
             await using var escopo = escopos.CreateAsyncScope();
-            foreach (var id in await escopo.ServiceProvider.GetRequiredService<IRepositorioDocumentos>().ListarPendentesAsync(cancelamento))
+            // IngeridoEm marca o início da ingestão; com o limiar acima da duração máxima da plataforma, um
+            // documento ainda pendente depois dele foi interrompido. O reprocessamento de documento antigo
+            // pode ser retomado em paralelo: risco aceito e registrado na feature 002.
+            DateTimeOffset? ingeridosAntesDe = recuperacao.Value.Limiar is { } limiar ? relogio.GetUtcNow() - limiar : null;
+            foreach (var id in await escopo.ServiceProvider.GetRequiredService<IRepositorioDocumentos>().ListarPendentesAsync(ingeridosAntesDe, cancelamento))
             {
                 await fila.EnfileirarAsync(new ItemIngestao(id, $"retomada-{id:N}"), cancelamento);
             }

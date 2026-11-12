@@ -46,7 +46,11 @@ public interface IRepositorioDocumentos
     Task<int> ContarTrechosAsync(Guid documentoId, CancellationToken cancelamento);
 
     /// <summary>Documentos recebidos ou em processamento, para retomar depois de um reinício.</summary>
-    Task<IReadOnlyList<Guid>> ListarPendentesAsync(CancellationToken cancelamento);
+    /// <summary>
+    /// Documentos recebidos ou em processamento, para retomar. Com <paramref name="ingeridosAntesDe"/>, só os
+    /// anteriores a ela, para não retomar o que outra instância processa (feature 002, FR-P06).
+    /// </summary>
+    Task<IReadOnlyList<Guid>> ListarPendentesAsync(DateTimeOffset? ingeridosAntesDe, CancellationToken cancelamento);
 }
 
 public interface IExtratorDocumento
@@ -82,7 +86,9 @@ public sealed record ConsultaTrechos(
     IReadOnlySet<ClassificacaoDocumento> Classificacoes,
     int TopK);
 
-public sealed record TrechoEncontrado(Guid TrechoId, string Texto, Documento Documento, LocalizacaoTrecho Localizacao, double Pontuacao);
+/// <param name="Pontuacao">Nota da fusão RRF, só para ordenar.</param>
+/// <param name="Similaridade">Cosseno entre consulta e trecho, de 0 a 1; nulo sem consulta (research R-38).</param>
+public sealed record TrechoEncontrado(Guid TrechoId, string Texto, Documento Documento, LocalizacaoTrecho Localizacao, double Pontuacao, double? Similaridade = null);
 
 public interface IBuscaTrechos
 {

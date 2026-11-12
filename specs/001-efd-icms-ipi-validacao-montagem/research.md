@@ -437,3 +437,38 @@ Itens marcados com **ADR** DEVEM ser registrados em `docs/adr/` antes da tarefa 
   antes da autenticação, porque a política padrão exige token em toda rota.
 - **Consequência**: os contratos de referência continuam nos arquivos OpenAPI escritos à mão em
   `contracts/`. Ainda falta um teste que compare o documento gerado com o contrato.
+
+## R-37 — Execução local pelo Visual Studio: configuração e autenticação (2026-11-10)
+
+- **Decisão (pedido do usuário)**: as APIs podem rodar pelo Visual Studio, com os bancos no Docker
+  (`docker compose up -d postgres mongo aspire-dashboard`). O `docker-compose.override.yml` publica
+  o Postgres em `127.0.0.1:5432`, o Mongo em `127.0.0.1:27018` (a 27017 costuma estar ocupada por um
+  MongoDB instalado na máquina) e o OTLP do Aspire em `127.0.0.1:18889`.
+- **Segredos locais**: ficam nos **User Secrets** do .NET (Manage User Secrets), um arquivo por
+  projeto em `%APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json`, fora do repositório
+  (P-19). O `appsettings.Development.json` foi descartado para segredos: embora esteja no
+  `.gitignore`, ele não é excluído pelo `.dockerignore` e o `dotnet publish` o copiaria para as
+  imagens Docker e do Vercel.
+- **Autenticação**: com `Autenticacao:Desabilitada = true`, ligada no perfil `http` dos
+  `launchSettings.json`, toda requisição entra como um usuário local (`usuario-local`,
+  `org-local`) com todos os papéis; as políticas continuam no código. A chave só vale no ambiente
+  `Development`; em outro, a API não inicia. Docker, testes e nuvem seguem com JWT (FR-080). O token
+  de serviço do MCP (`McpRag:TokenServico`) é opcional nesse modo.
+- **Alternativas**: `appsettings.Development.json` (risco de ir para a imagem, acima); tokens do
+  `dotnet user-jwts` também no Visual Studio (adiado a pedido do usuário; continua documentado no §2
+  do quickstart).
+
+## R-38 — Proximidade da resposta com a base (2026-11-10)
+
+- **Decisão (pedido do usuário)**: a resposta da conversa ganha `proximidade`, de 0 a 1, calculada
+  pelo sistema e nunca pelo LLM (P-12). A `buscar_trechos` passa a devolver `similaridade` por
+  trecho: 1 − distância de cosseno no pgvector entre o embedding da consulta e o do trecho, limitada
+  a [0, 1]. A Api.Agente usa a maior similaridade entre os trechos **citados** na resposta; sem
+  citação, entre os trechos **recuperados** para a pergunta; 0 sem trechos, com a base
+  indisponível ou em `obter_trecho` (que não tem consulta).
+- **Por que não a `pontuacao`**: a nota da fusão RRF só ordena e não fica entre 0 e 1.
+- **Limite**: mede a proximidade semântica entre pergunta e trecho, não a correção da resposta.
+  O valor depende do modelo de embeddings; não há limiar de corte até os evals (R-17).
+- **Correção junto**: a limitação de arquivo descartado (R-29) só entra em conversa vinculada a uma
+  execução; sem vínculo, `dependeDoArquivo` do modelo é ignorado e vale a limitação de falta de
+  evidência (FR-052).

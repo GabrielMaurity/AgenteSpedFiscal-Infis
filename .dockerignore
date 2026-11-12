@@ -6,6 +6,9 @@
 .claude/
 .specify/
 specs/
+# Contratos do LLM embutidos na Api.Agente.Infrastructure (research R-09).
+!specs/001-efd-icms-ipi-validacao-montagem/contracts/llm-analise.schema.json
+!specs/001-efd-icms-ipi-validacao-montagem/contracts/llm-conversa.schema.json
 docs/
 evals/
 tests/

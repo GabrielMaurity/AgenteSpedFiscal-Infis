@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentespedfiscal/contracts/llm-conversa/1.0.0",
+  "title": "Resposta estruturada do LLM — pergunta em conversa",
+  "description": "Conteúdo produzido pelo modelo ao responder uma pergunta. NÃO contém identificadores, referências montadas, classificação nem fundamentação em fonte oficial: o sistema monta as referências a partir dos trechoIds recuperados e calcula fundamentadaEmFonteOficial (constitution P-12, research R-27). Compatível com saída estruturada estrita: todos os campos obrigatórios, sem additionalProperties.",
+  "type": "object",
+  "required": ["versaoContrato", "resposta", "fundamentada", "dependeDoArquivo", "trechoIds", "limitacoes"],
+  "additionalProperties": false,
+  "properties": {
+    "versaoContrato": { "const": "1.0.0" },
+    "resposta": { "type": "string", "description": "Resposta em português para o usuário." },
+    "fundamentada": { "type": "boolean", "description": "true só quando a resposta se apoia nos trechos citados." },
+    "dependeDoArquivo": { "type": "boolean", "description": "true quando a pergunta exige dado do arquivo que não está nos achados nem na identificação (research R-29)." },
+    "trechoIds": { "type": "array", "items": { "type": "string" }, "description": "Somente trechos recuperados nesta mensagem." },
+    "limitacoes": { "type": "array", "items": { "type": "string" } }
+  }
+}

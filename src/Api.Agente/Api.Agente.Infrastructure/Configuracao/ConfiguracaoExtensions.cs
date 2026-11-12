@@ -12,9 +12,11 @@ public static class ConfiguracaoExtensions
         Registrar<PostgresOpcoes>(services, PostgresOpcoes.Secao);
         Registrar<PersistenciaOpcoes>(services, PersistenciaOpcoes.Secao);
         Registrar<McpRagOpcoes>(services, McpRagOpcoes.Secao);
+        Registrar<BaseInformacaoOpcoes>(services, BaseInformacaoOpcoes.Secao);
         Registrar<ArquivosOpcoes>(services, ArquivosOpcoes.Secao);
         Registrar<ResilienciaOpcoes>(services, ResilienciaOpcoes.Secao);
         Registrar<LimitesOpcoes>(services, LimitesOpcoes.Secao);
+        Registrar<RecuperacaoOpcoes>(services, RecuperacaoOpcoes.Secao);
         return services;
     }
 

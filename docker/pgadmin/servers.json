@@ -1,0 +1,22 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "rag (base de informação)",
+      "Group": "AgenteSpedFiscal",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "rag",
+      "Username": "rag",
+      "SSLMode": "prefer"
+    },
+    "2": {
+      "Name": "agente (consumo de IA e NCM)",
+      "Group": "AgenteSpedFiscal",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "agente",
+      "Username": "agente",
+      "SSLMode": "prefer"
+    }
+  }
+}

@@ -126,12 +126,13 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [mensagemId, resposta, fundamentada, fundamentadaEmFonteOficial, referencias, limitacoes]
+                required: [mensagemId, resposta, fundamentada, fundamentadaEmFonteOficial, proximidade, referencias, limitacoes]
                 properties:
                   mensagemId: { type: string }
                   resposta: { type: string }
                   fundamentada: { type: boolean, description: "false quando não houve evidência suficiente (FR-052) ou a pergunta depende do arquivo já descartado" }
                   fundamentadaEmFonteOficial: { type: boolean, description: "Calculado pelo sistema; false quando só há trechos internos (FR-051)" }
+                  proximidade: { type: number, minimum: 0, maximum: 1, description: "Calculada pelo sistema (research R-38): maior similaridade de cosseno entre a pergunta e os trechos citados; sem citação, entre a pergunta e os trechos recuperados; 0 sem trechos ou com a base indisponível" }
                   referencias:
                     type: array
                     items:

@@ -1,0 +1,21 @@
+{
+  "descricao": "(a) Perguntas com trechos esperados do Guia Prático 3.2.4. A relevância é decidida pela localização (registro, ou capítulo e seção), não pelo trechoId, que muda a cada ingestão.",
+  "itens": [
+    { "id": "rec-0000", "pergunta": "Qual registro abre o arquivo digital e identifica a entidade, com período, finalidade e perfil?", "periodo": "2026-01", "esperado": { "registros": ["0000"] } },
+    { "id": "rec-0150", "pergunta": "Onde informar o cadastro dos participantes, como fornecedores e clientes?", "periodo": "2026-01", "esperado": { "registros": ["0150"] } },
+    { "id": "rec-0190", "pergunta": "Como identificar as unidades de medida usadas no arquivo?", "periodo": "2026-01", "esperado": { "registros": ["0190"] } },
+    { "id": "rec-0200", "pergunta": "Qual registro traz a tabela de identificação do item, produtos e serviços, com a unidade de inventário?", "periodo": "2026-01", "esperado": { "registros": ["0200"] } },
+    { "id": "rec-C100", "pergunta": "Como informar a nota fiscal modelo 55 e o campo VL_DOC?", "periodo": "2026-01", "esperado": { "registros": ["C100"] } },
+    { "id": "rec-C170", "pergunta": "Quando informar os itens do documento fiscal no C170?", "periodo": "2026-01", "esperado": { "registros": ["C170"] } },
+    { "id": "rec-C190", "pergunta": "Como o C190 totaliza o documento por CST, CFOP e alíquota, e qual o campo VL_OPR?", "periodo": "2026-01", "esperado": { "registros": ["C190"] } },
+    { "id": "rec-C500", "pergunta": "Qual registro escritura a nota fiscal de energia elétrica?", "periodo": "2026-01", "esperado": { "registros": ["C500"] } },
+    { "id": "rec-D100", "pergunta": "Onde escriturar o conhecimento de transporte eletrônico (CT-e)?", "periodo": "2026-01", "esperado": { "registros": ["D100"] } },
+    { "id": "rec-E100", "pergunta": "Qual registro informa o período da apuração do ICMS?", "periodo": "2026-01", "esperado": { "registros": ["E100"] } },
+    { "id": "rec-E110", "pergunta": "Onde fica a apuração do ICMS das operações próprias, com saldo devedor e credor?", "periodo": "2026-01", "esperado": { "registros": ["E110"] } },
+    { "id": "rec-H010", "pergunta": "Como informar o inventário físico, item a item?", "periodo": "2026-01", "esperado": { "registros": ["H010"] } },
+    { "id": "rec-K200", "pergunta": "Qual registro do Bloco K traz o estoque escriturado?", "periodo": "2026-01", "esperado": { "registros": ["K200"] } },
+    { "id": "rec-1010", "pergunta": "Qual registro indica a obrigatoriedade dos registros do Bloco 1?", "periodo": "2026-01", "esperado": { "registros": ["1010"] } },
+    { "id": "rec-9900", "pergunta": "Como funciona a totalização da quantidade de linhas por tipo de registro no Bloco 9?", "periodo": "2026-01", "esperado": { "registros": ["9900"] } },
+    { "id": "rec-ibs-vldoc", "pergunta": "O valor de IBS e CBS entra no VL_DOC do C100 em 2026?", "periodo": "2026-03", "esperado": { "capitulo": "I", "secoes": ["10"] } }
+  ]
+}

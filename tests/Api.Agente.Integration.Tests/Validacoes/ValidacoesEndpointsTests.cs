@@ -14,7 +14,7 @@ namespace Api.Agente.Integration.Tests.Validacoes;
 [Trait("Category", "Docker")]
 public sealed class ValidacoesEndpointsTests : IAsyncDisposable
 {
-    private static readonly Lazy<JsonSchema> SchemaEnvelope = new(() =>
+    internal static readonly Lazy<JsonSchema> SchemaEnvelope = new(() =>
         JsonSchema.FromText(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Contratos", "envelope-validacao.schema.json"))));
 
     private readonly string _temporario = Path.Combine(Path.GetTempPath(), $"testes-efd-{Guid.NewGuid():N}");

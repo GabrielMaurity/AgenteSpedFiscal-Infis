@@ -1,0 +1,9 @@
+{
+  "descricao": "(b) Explicações de achados avaliadas por rubrica determinística: resposta fundamentada, fonte oficial citada, registros esperados entre as referências e termos esperados no texto.",
+  "itens": [
+    { "id": "exp-unidade-0190", "pergunta": "O item do 0200 usa uma unidade que não está no 0190. O que isso significa e como corrigir?", "periodo": "2026-01", "criterios": { "fundamentada": true, "fundamentadaEmFonteOficial": true, "registrosCitados": ["0190"], "contem": ["0190"] } },
+    { "id": "exp-c170-orfao", "pergunta": "Apareceu um C170 sem C100 antes dele. Por que isso é erro de hierarquia?", "periodo": "2026-01", "criterios": { "fundamentada": true, "fundamentadaEmFonteOficial": true, "registrosCitados": ["C170", "C100"], "contem": ["C100"] } },
+    { "id": "exp-9900", "pergunta": "A quantidade informada no 9900 não bate com as linhas do registro. Como corrigir?", "periodo": "2026-01", "criterios": { "fundamentada": true, "fundamentadaEmFonteOficial": true, "registrosCitados": ["9900"], "contem": ["9900"] } },
+    { "id": "exp-c190-total", "pergunta": "A soma do VL_OPR dos C190 difere do VL_DOC do C100. O que verificar?", "periodo": "2026-01", "criterios": { "fundamentada": true, "fundamentadaEmFonteOficial": true, "registrosCitados": ["C190"], "contem": ["VL_OPR"] } }
+  ]
+}

@@ -181,6 +181,40 @@ public class SchemasContratosTests
     public void Resposta_do_llm_nao_aceita_metadados_do_sistema(string campo) =>
         Assert.False(Valido("llm-analise.schema.json", RespostaLlm(extra: $$""", "{{campo}}": "x" """)));
 
+    private static string RespostaConversa(string extra = "") => $$"""
+        { "versaoContrato": "1.0.0", "resposta": "r", "fundamentada": true, "dependeDoArquivo": false, "trechoIds": ["t1"], "limitacoes": [] {{extra}} }
+        """;
+
+    [Fact]
+    public void Resposta_de_conversa_do_llm_valida() =>
+        Assert.True(Valido("llm-conversa.schema.json", RespostaConversa()));
+
+    [Theory]
+    [InlineData("referencias")]
+    [InlineData("fundamentadaEmFonteOficial")]
+    [InlineData("classificacao")]
+    public void Resposta_de_conversa_nao_aceita_campos_calculados_pelo_sistema(string campo) =>
+        Assert.False(Valido("llm-conversa.schema.json", RespostaConversa($$""", "{{campo}}": "x" """)));
+
+    [Fact]
+    public void Resposta_de_conversa_exige_declarar_dependencia_do_arquivo() =>
+        Assert.False(Valido("llm-conversa.schema.json", RespostaConversa().Replace("\"dependeDoArquivo\": false, ", "", StringComparison.Ordinal)));
+
+    [Fact]
+    public void Envelope_com_analise_aceita_e_valido() =>
+        Assert.True(Valido("envelope-validacao.schema.json", Envelope().Replace(
+            "\"revisaoHumanaNecessaria\"",
+            $$"""
+            "analiseIa": {
+              "status": "aceita", "modelo": "m", "tentativas": 1,
+              "conteudo": {{RespostaLlm()}},
+              "referencias": [{ "trechoId": "t1", "documento": "Guia", "versao": "3.2.4", "localizacao": "Cap. I", "classificacao": "oficial" }],
+              "fundamentadaEmFonteOficial": true
+            },
+            "revisaoHumanaNecessaria"
+            """,
+            StringComparison.Ordinal)));
+
     [Fact]
     public void Agent_card_anuncia_as_duas_skills_e_exige_autenticacao()
     {

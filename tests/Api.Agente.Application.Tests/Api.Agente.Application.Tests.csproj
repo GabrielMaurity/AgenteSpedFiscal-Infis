@@ -11,6 +11,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/Api.Agente/Api.Agente.Application/Api.Agente.Application.csproj" />
+    <!-- O filtro de ferramentas do Semantic Kernel fica na infraestrutura (T092). -->
+    <ProjectReference Include="../../src/Api.Agente/Api.Agente.Infrastructure/Api.Agente.Infrastructure.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="../fixtures/efd/*" Link="fixtures/efd/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />

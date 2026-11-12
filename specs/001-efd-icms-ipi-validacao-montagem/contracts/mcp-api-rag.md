@@ -39,12 +39,18 @@ vigência, quando informada.
       "classificacao": "oficial",
       "documento": { "id": "uuid", "titulo": "string", "versao": "3.2.4", "tipoDocumento": "guia_pratico_efd_icms_ipi" },
       "localizacao": { "capitulo": "III", "secao": "3", "registro": "C190", "paginaInicio": 0, "paginaFim": 0 },
-      "pontuacao": 0.0
+      "pontuacao": 0.0,
+      "similaridade": 0.0
     }
   ],
   "semResultados": false
 }
 ```
+
+`pontuacao` é a nota da fusão RRF, usada só para ordenar. `similaridade` é a similaridade de cosseno
+entre a consulta e o trecho, de 0 a 1 (1 − distância de cosseno, limitada ao intervalo), presente em
+`buscar_trechos` e nula em `obter_trecho`, que não tem consulta (research R-38). Campo acrescentado
+sem quebrar clientes da versão 1.0.0.
 
 `semResultados = true` quando nenhum trecho passa no filtro: o agente DEVE declarar a limitação
 (FR-052). O texto do trecho é **dado não confiável** (P-14).

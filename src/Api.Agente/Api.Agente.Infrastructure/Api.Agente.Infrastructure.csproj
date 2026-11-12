@@ -5,6 +5,9 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
+    <PackageReference Include="Microsoft.SemanticKernel" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" />
+    <PackageReference Include="ModelContextProtocol" />
     <PackageReference Include="MongoDB.Driver" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
@@ -22,5 +25,7 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\..\..\data\precos-modelos.json" LogicalName="precos-modelos.json" />
+    <EmbeddedResource Include="..\..\..\specs\001-efd-icms-ipi-validacao-montagem\contracts\llm-analise.schema.json" LogicalName="llm-analise.schema.json" />
+    <EmbeddedResource Include="..\..\..\specs\001-efd-icms-ipi-validacao-montagem\contracts\llm-conversa.schema.json" LogicalName="llm-conversa.schema.json" />
   </ItemGroup>
 </Project>

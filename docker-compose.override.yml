@@ -1,0 +1,39 @@
+# Desenvolvimento pelo Visual Studio: publica as portas dos bancos e do OTLP para as APIs rodando fora do Docker.
+# O docker compose lê este arquivo automaticamente junto com o docker-compose.yml.
+# Mongo na 27018 porque a 27017 pode estar ocupada por um MongoDB instalado na máquina.
+#
+# Bancos, dashboard e pgAdmin:  docker compose up -d postgres mongo aspire-dashboard pgadmin
+services:
+  postgres:
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  mongo:
+    ports:
+      - "127.0.0.1:27018:27017"
+
+  aspire-dashboard:
+    ports:
+      - "127.0.0.1:18889:18889"
+
+  # pgAdmin em modo desktop (sem login), só em 127.0.0.1: http://localhost:5050
+  # Os servidores rag e agente já vêm cadastrados; a senha de cada um é pedida na conexão (valores do .env).
+  pgadmin:
+    image: dpage/pgadmin4:9.8
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Exigido pela imagem mesmo sem login; domínio reservado para exemplos (o .local é recusado).
+      PGADMIN_DEFAULT_EMAIL: dev@example.com
+      PGADMIN_DEFAULT_PASSWORD: ${POSTGRES_ROOT_PASSWORD:?defina no .env}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    volumes:
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - pgadmin-dados:/var/lib/pgadmin
+    ports:
+      - "127.0.0.1:5050:80"
+
+volumes:
+  pgadmin-dados:

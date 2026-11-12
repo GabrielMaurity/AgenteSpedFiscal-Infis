@@ -3,4 +3,10 @@
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Shared/AgenteSpedFiscal.Contracts.Mcp/AgenteSpedFiscal.Contracts.Mcp.csproj" />
+  </ItemGroup>
 </Project>

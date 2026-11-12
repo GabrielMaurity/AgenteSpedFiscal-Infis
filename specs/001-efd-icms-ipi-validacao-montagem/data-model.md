@@ -164,7 +164,7 @@ nessa conta (research R-30).
 | _id | uuid | conversaId |
 | orgId, usuarioId | string | isolamento (FR-054) |
 | execucaoId | uuid? | vínculo opcional |
-| mensagens[] | {id, papel `usuario`/`agente`, texto, referencias[] {trechoId, classificacao}, fundamentada, fundamentadaEmFonteOficial, limitacoes[], criadoEm} | `fundamentadaEmFonteOficial` calculado pelo sistema (R-27) |
+| mensagens[] | {id, papel `usuario`/`agente`, texto, referencias[] {trechoId, classificacao}, fundamentada, fundamentadaEmFonteOficial, proximidade, limitacoes[], criadoEm} | `fundamentadaEmFonteOficial` (R-27) e `proximidade` (R-38) calculados pelo sistema |
 | expiraEm | datetime | TTL, inicial 90 dias |
 
 ---

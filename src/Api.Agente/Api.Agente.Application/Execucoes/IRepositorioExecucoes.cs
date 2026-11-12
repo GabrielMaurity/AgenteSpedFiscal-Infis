@@ -13,6 +13,9 @@ public interface IRepositorioExecucoes
 
     Task<bool> ExcluirAsync(string orgId, Guid id, CancellationToken cancelamento);
 
-    /// <summary>Execuções não finalizadas de todas as organizações; uso exclusivo na reinicialização.</summary>
-    Task<IReadOnlyList<Execucao>> ListarEmAndamentoAsync(CancellationToken cancelamento);
+    /// <summary>
+    /// Execuções não finalizadas de todas as organizações; uso exclusivo na recuperação. Com
+    /// <paramref name="atualizadasAntesDe"/>, só as sem atualização desde então (feature 002, FR-P06).
+    /// </summary>
+    Task<IReadOnlyList<Execucao>> ListarEmAndamentoAsync(DateTimeOffset? atualizadasAntesDe, CancellationToken cancelamento);
 }

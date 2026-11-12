@@ -73,6 +73,27 @@ public sealed class SegmentacaoOpcoes
     public int LimiteTokens { get; set; } = 800;
 }
 
+/// <summary>
+/// Recuperação de itens interrompidos (feature 002, FR-P06). Com instância única, a inicialização trata
+/// todos os itens em andamento, pois nada mais os processa. Com várias instâncias (Vercel), só os parados
+/// há mais que o limiar, que deve passar da duração máxima de uma requisição na plataforma.
+/// </summary>
+public sealed class RecuperacaoOpcoes
+{
+    public const string Secao = "Recuperacao";
+
+    public bool InstanciaUnica { get; set; } = true;
+
+    [Range(1, 1_440)]
+    public int LimiarMinutos { get; set; } = 10;
+
+    [Range(1, 1_440)]
+    public int IntervaloVarreduraMinutos { get; set; } = 1;
+
+    /// <summary>Nulo com instância única: todos os itens em andamento são tratados.</summary>
+    public TimeSpan? Limiar => InstanciaUnica ? null : TimeSpan.FromMinutes(LimiarMinutos);
+}
+
 public static class ConfiguracaoExtensions
 {
     /// <summary>Registra as opções e impede o início do serviço com configuração inválida (P-19).</summary>
@@ -84,6 +105,7 @@ public static class ConfiguracaoExtensions
         Registrar<BuscaOpcoes>(services, BuscaOpcoes.Secao);
         Registrar<SegmentacaoOpcoes>(services, SegmentacaoOpcoes.Secao);
         Registrar<IngestaoOpcoes>(services, IngestaoOpcoes.Secao);
+        Registrar<RecuperacaoOpcoes>(services, RecuperacaoOpcoes.Secao);
         return services;
     }
 

@@ -16,6 +16,12 @@ public sealed class FabricaApiAgente : WebApplicationFactory<Program>
 {
     public IReadOnlyDictionary<string, string?> Configuracao { get; init; } = ConfiguracaoPadrao();
 
+    /// <summary>Ambiente do host; Development só nos testes do modo sem autenticação.</summary>
+    public string Ambiente { get; init; } = "Testing";
+
+    /// <summary>Substituições de serviços, como a base de informação e o modelo falsos.</summary>
+    public Action<IServiceCollection>? Servicos { get; init; }
+
     public const string Emissor = "testes";
     public const string Audiencia = "api-agente";
 
@@ -29,15 +35,21 @@ public sealed class FabricaApiAgente : WebApplicationFactory<Program>
         ["MongoDb:Database"] = "testes",
         ["Postgres:ConnectionString"] = "Host=localhost;Port=1;Database=testes;Timeout=1",
         ["McpRag:Url"] = "http://localhost:1/mcp",
+        ["Resiliencia:Retentativas"] = "1",
+        ["Resiliencia:AtrasoBaseMilissegundos"] = "1",
+        ["Resiliencia:TimeoutMcpSegundos"] = "2",
         ["Authentication:Schemes:Bearer:ValidIssuer"] = Emissor,
         ["Authentication:Schemes:Bearer:ValidAudiences:0"] = Audiencia,
         ["Authentication:Schemes:Bearer:SigningKeys:0:Issuer"] = Emissor,
         ["Authentication:Schemes:Bearer:SigningKeys:0:Value"] = Convert.ToBase64String(Chave),
     };
 
-    public static string CriarToken(string? orgId = "org-teste", string? audiencia = Audiencia, params string[] papeis)
+    public static string CriarToken(string? orgId = "org-teste", string? audiencia = Audiencia, params string[] papeis) =>
+        CriarTokenUsuario("usuario-teste", orgId, audiencia, papeis);
+
+    public static string CriarTokenUsuario(string usuario, string? orgId, string? audiencia = Audiencia, params string[] papeis)
     {
-        var claims = new Dictionary<string, object> { [JwtRegisteredClaimNames.Sub] = "usuario-teste" };
+        var claims = new Dictionary<string, object> { [JwtRegisteredClaimNames.Sub] = usuario };
         if (orgId is not null)
         {
             claims["org_id"] = orgId;
@@ -71,7 +83,7 @@ public sealed class FabricaApiAgente : WebApplicationFactory<Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseEnvironment("Testing");
+        builder.UseEnvironment(Ambiente);
 
         foreach (var (chave, valor) in Configuracao)
         {
@@ -83,6 +95,7 @@ public sealed class FabricaApiAgente : WebApplicationFactory<Program>
             var inicializador = servicos.Single(s => s.ServiceType == typeof(IHostedService)
                 && s.ImplementationType == typeof(InicializadorBancos));
             servicos.Remove(inicializador);
+            Servicos?.Invoke(servicos);
         });
     }
 }
