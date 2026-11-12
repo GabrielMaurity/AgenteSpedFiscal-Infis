@@ -42,6 +42,10 @@ public sealed class ClienteMcpRag(
             ["periodo"] = consulta.Periodo,
             ["topK"] = consulta.TopK ?? opcoesBase.Value.TopK,
         };
+        if (opcoesBase.Value.TiposOficiaisAdicionais is { Length: > 0 } adicionais)
+        {
+            argumentos["tiposDocumentoAdicionais"] = adicionais;
+        }
 
         var resultado = await ChamarAsync(ContratoMcp.BuscarTrechos, argumentos, consulta.CorrelacaoId, cancelamento);
         if (resultado.IsError == true)

@@ -84,7 +84,8 @@ public sealed record ConsultaTrechos(
     DateOnly? PeriodoInicio,
     DateOnly? PeriodoFim,
     IReadOnlySet<ClassificacaoDocumento> Classificacoes,
-    int TopK);
+    int TopK,
+    IReadOnlyList<string>? TiposAdicionais = null);
 
 /// <param name="Pontuacao">Nota da fusão RRF, só para ordenar.</param>
 /// <param name="Similaridade">Cosseno entre consulta e trecho, de 0 a 1; nulo sem consulta (research R-38).</param>

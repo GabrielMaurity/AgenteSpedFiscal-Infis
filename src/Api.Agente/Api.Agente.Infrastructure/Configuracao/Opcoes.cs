@@ -79,6 +79,12 @@ public sealed class BaseInformacaoOpcoes
 
     [Range(1, 300)]
     public int TimeoutFerramentaSegundos { get; set; } = 15;
+
+    /// <summary>
+    /// Outros tipos de documento oficial usados nas respostas além do Guia Prático (research R-39), como
+    /// manuais estaduais. Entram pela vigência no período; a versão vale só para o tipo principal.
+    /// </summary>
+    public string[] TiposOficiaisAdicionais { get; set; } = ["nota_tecnica_leiaute", "ato_cotepe", "legislacao", "outro_oficial"];
 }
 
 public sealed class ArquivosOpcoes

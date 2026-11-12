@@ -41,6 +41,20 @@ public class ContratoMcpTests
         Assert.NotNull(Requisicao(consulta: new string('a', 1_001)).Validar());
     }
 
+    [Fact]
+    public void Tipos_adicionais_sao_opcionais_e_aceitos()
+    {
+        Assert.Null((Requisicao() with { TiposDocumentoAdicionais = null }).Validar());
+        Assert.Null((Requisicao() with { TiposDocumentoAdicionais = ["outro_oficial", "legislacao"] }).Validar());
+    }
+
+    [Fact]
+    public void Rejeita_tipo_adicional_vazio_ou_lista_grande()
+    {
+        Assert.NotNull((Requisicao() with { TiposDocumentoAdicionais = [" "] }).Validar());
+        Assert.NotNull((Requisicao() with { TiposDocumentoAdicionais = [.. Enumerable.Range(0, 11).Select(i => $"tipo_{i}")] }).Validar());
+    }
+
     [Theory]
     [InlineData(Classificacao.Oficial, "\"oficial\"")]
     [InlineData(Classificacao.Interno, "\"interno\"")]

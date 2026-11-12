@@ -7,7 +7,12 @@ namespace Api.Rag.Domain.Segmentacao;
 public sealed record PaginaExtraida(int Numero, IReadOnlyList<string> Linhas);
 
 /// <summary>Valores iniciais para avaliação, ainda não aprovados (P-10, research R-13).</summary>
-public sealed record ParametrosSegmentacao(int LimiteTokens = 800, int SobreposicaoParagrafos = 1)
+/// <param name="TetoTokens">
+/// Tamanho máximo de qualquer trecho, inclusive a tabela de campos de um registro. Fica abaixo do limite do
+/// modelo de embeddings (8.191 tokens) com folga para a estimativa aproximada e acima do maior trecho do
+/// Guia 3.2.4 (cerca de 3.844), que assim não muda.
+/// </param>
+public sealed record ParametrosSegmentacao(int LimiteTokens = 800, int SobreposicaoParagrafos = 1, int TetoTokens = 4_000)
 {
     /// <summary>Estimativa sem tokenizador: cerca de 4 caracteres por token em português.</summary>
     public static int EstimarTokens(string texto) => (texto.Length + 3) / 4;
@@ -40,6 +45,50 @@ internal static class Agrupador
         if (atual.Count > 0)
         {
             yield return [.. atual.SelectMany(p => p)];
+        }
+    }
+
+    /// <summary>
+    /// Divide por linhas um grupo acima do teto; uma linha que sozinha passa do teto é cortada em partes.
+    /// Cada parte mantém a página de origem de suas linhas.
+    /// </summary>
+    public static IEnumerable<IReadOnlyList<LinhaPaginada>> Limitar(IReadOnlyList<LinhaPaginada> linhas, int tetoTokens)
+    {
+        if (ParametrosSegmentacao.EstimarTokens(string.Join("\n", linhas.Select(l => l.Texto))) <= tetoTokens)
+        {
+            yield return linhas;
+            yield break;
+        }
+
+        var maximoCaracteres = Math.Max(1, (tetoTokens * 4) - 3);
+        var atual = new List<LinhaPaginada>();
+        var caracteres = 0;
+        foreach (var linha in linhas.SelectMany(l => Cortar(l, maximoCaracteres)))
+        {
+            var tamanho = linha.Texto.Length + (atual.Count > 0 ? 1 : 0);
+            if (atual.Count > 0 && caracteres + tamanho > maximoCaracteres)
+            {
+                yield return atual;
+                atual = [];
+                caracteres = 0;
+                tamanho = linha.Texto.Length;
+            }
+
+            atual.Add(linha);
+            caracteres += tamanho;
+        }
+
+        if (atual.Count > 0)
+        {
+            yield return atual;
+        }
+    }
+
+    private static IEnumerable<LinhaPaginada> Cortar(LinhaPaginada linha, int maximoCaracteres)
+    {
+        for (var inicio = 0; inicio < linha.Texto.Length; inicio += maximoCaracteres)
+        {
+            yield return linha with { Texto = linha.Texto.Substring(inicio, Math.Min(maximoCaracteres, linha.Texto.Length - inicio)) };
         }
     }
 }
@@ -112,7 +161,7 @@ public static partial class SegmentadorGuia
             // Texto fora de registro: cada linha é um parágrafo, porque o PDF não marca parágrafos.
             foreach (var grupo in Agrupador.Agrupar([.. unidade.Select(l => (IReadOnlyList<LinhaPaginada>)[l])], parametros))
             {
-                Adicionar(trechos, grupo, capitulo, secao, null);
+                Adicionar(trechos, grupo, capitulo, secao, null, parametros);
             }
 
             return;
@@ -120,7 +169,7 @@ public static partial class SegmentadorGuia
 
         var inicioNotas = unidade.FindIndex(l => NotaDeCampo().IsMatch(l.Texto));
         var principal = inicioNotas < 0 ? unidade : unidade[..inicioNotas];
-        Adicionar(trechos, principal, capitulo, secao, registro);
+        Adicionar(trechos, principal, capitulo, secao, registro, parametros);
         if (inicioNotas < 0)
         {
             return;
@@ -140,22 +189,27 @@ public static partial class SegmentadorGuia
 
         foreach (var grupo in Agrupador.Agrupar(paragrafos, parametros))
         {
-            Adicionar(trechos, grupo, capitulo, secao, registro);
+            Adicionar(trechos, grupo, capitulo, secao, registro, parametros);
         }
     }
 
-    private static void Adicionar(List<Trecho> trechos, IReadOnlyList<LinhaPaginada> linhas, string? capitulo, string? secao, string? registro)
+    /// <summary>Um trecho por parte: acima do teto de tokens, o grupo é dividido (a tabela de campos inclusive).</summary>
+    private static void Adicionar(
+        List<Trecho> trechos, IReadOnlyList<LinhaPaginada> linhas, string? capitulo, string? secao, string? registro, ParametrosSegmentacao parametros)
     {
-        var texto = string.Join("\n", linhas.Select(l => l.Texto)).Trim();
-        if (texto.Length == 0)
+        foreach (var parte in Agrupador.Limitar(linhas, parametros.TetoTokens))
         {
-            return;
-        }
+            var texto = string.Join("\n", parte.Select(l => l.Texto)).Trim();
+            if (texto.Length == 0)
+            {
+                continue;
+            }
 
-        trechos.Add(new Trecho(
-            trechos.Count + 1,
-            texto,
-            new LocalizacaoTrecho(capitulo, secao, registro, linhas.Min(l => l.Pagina), linhas.Max(l => l.Pagina))));
+            trechos.Add(new Trecho(
+                trechos.Count + 1,
+                texto,
+                new LocalizacaoTrecho(capitulo, secao, registro, parte.Min(l => l.Pagina), parte.Max(l => l.Pagina))));
+        }
     }
 
     /// <summary>Remove a numeração de página e as linhas que se repetem na maior parte das páginas.</summary>
@@ -237,7 +291,7 @@ public static partial class SegmentadorGenerico
         void FecharSecao()
         {
             FecharParagrafo();
-            foreach (var grupo in Agrupador.Agrupar(paragrafos, parametros))
+            foreach (var grupo in Agrupador.Agrupar(paragrafos, parametros).SelectMany(g => Agrupador.Limitar(g, parametros.TetoTokens)))
             {
                 var conteudo = string.Join("\n", grupo.Select(l => l.Texto)).Trim();
                 if (conteudo.Length > 0)

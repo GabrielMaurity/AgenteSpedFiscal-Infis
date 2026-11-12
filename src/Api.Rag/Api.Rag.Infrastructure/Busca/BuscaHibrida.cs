@@ -100,12 +100,17 @@ public sealed partial class BuscaHibrida(RagDbContext banco) : IBuscaTrechos
         return candidato is null ? null : Montar(candidato, 1, null);
     }
 
-    /// <summary>Oficial: tipo e versão, ou vigência no período. Interno: vigência, quando há período (research R-27).</summary>
+    /// <summary>
+    /// Oficial do tipo principal: versão, ou vigência no período. Oficial dos tipos adicionais (manuais
+    /// estaduais, notas técnicas, legislação): só a vigência, quando há período (research R-39). Interno:
+    /// vigência, quando há período (research R-27).
+    /// </summary>
     private IQueryable<Candidato> Filtrar(ConsultaTrechos consulta)
     {
         var oficial = consulta.Classificacoes.Contains(DominioClassificacao.Oficial);
         var interno = consulta.Classificacoes.Contains(DominioClassificacao.Interno);
         var (tipo, versao, inicio, fim, modelo) = (consulta.TipoDocumento, consulta.Versao, consulta.PeriodoInicio, consulta.PeriodoFim, consulta.ModeloEmbedding);
+        var adicionais = (consulta.TiposAdicionais ?? []).ToList();
 
         return banco.Trechos.AsNoTracking()
             .Join(banco.Documentos.AsNoTracking(), t => t.DocumentoId, d => d.Id, (t, d) => new Candidato { Trecho = t, Documento = d })
@@ -118,6 +123,12 @@ public sealed partial class BuscaHibrida(RagDbContext banco) : IBuscaTrechos
                         ? c.Documento.Versao == versao
                         : (c.Documento.VigenciaInicio == null || c.Documento.VigenciaInicio <= fim)
                             && (c.Documento.VigenciaFim == null || c.Documento.VigenciaFim >= inicio)))
+                || (oficial
+                    && c.Documento.Classificacao == ClassificacaoDocumento.Oficial
+                    && adicionais.Contains(c.Documento.TipoDocumento)
+                    && (inicio == null
+                        || ((c.Documento.VigenciaInicio == null || c.Documento.VigenciaInicio <= fim)
+                            && (c.Documento.VigenciaFim == null || c.Documento.VigenciaFim >= inicio))))
                 || (interno
                     && c.Documento.Classificacao == ClassificacaoDocumento.Interno
                     && (inicio == null

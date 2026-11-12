@@ -21,6 +21,7 @@ Busca híbrida filtrada por tipo e versão (research R-13).
 | periodo | string `AAAA-MM` | não | seleciona a versão vigente no período |
 | classificacoes | (`oficial` \| `interno`)[] | não | padrão: ambas (research R-27) |
 | topK | int | não | 1–20; padrão por configuração |
+| tiposDocumentoAdicionais | string[] | não | até 10 tipos oficiais além de `tipoDocumento` (ex.: `outro_oficial`, `legislacao`), filtrados só pela vigência no período (research R-39) |
 | correlacaoId | string | sim | — |
 
 Exatamente um entre `versao` e `periodo` DEVE ser informado. O filtro por `tipoDocumento`, versão

@@ -472,3 +472,21 @@ Itens marcados com **ADR** DEVEM ser registrados em `docs/adr/` antes da tarefa 
 - **Correção junto**: a limitação de arquivo descartado (R-29) só entra em conversa vinculada a uma
   execução; sem vínculo, `dependeDoArquivo` do modelo é ignorado e vale a limitação de falta de
   evidência (FR-052).
+
+## R-39 — Outros documentos oficiais nas respostas e teto de tamanho dos trechos (2026-11-12)
+
+- **Decisão (pedido do usuário)**: além do Guia Prático (`tipoDocumento` principal, filtrado por versão
+  ou período), a busca inclui documentos oficiais de outros tipos (`nota_tecnica_leiaute`, `ato_cotepe`,
+  `legislacao`, `outro_oficial`), filtrados só pela vigência no período. O contrato MCP ganhou o
+  parâmetro opcional `tiposDocumentoAdicionais` (mudança aditiva); a Api.Agente envia a lista de
+  `BaseInformacao:TiposOficiaisAdicionais`. Primeiro caso: Manual Consolidado de Escrituração do ICMS de
+  Minas Gerais (SEF/MG) v.2025.02, ingerido como `oficial`/`outro_oficial`.
+- **Documentos estaduais**: valem só para a UF de origem; o prompt instrui o modelo a dizer a UF ao usar
+  esses trechos. Ainda não há filtro por UF na busca; a avaliação (R-17) deve medir se respostas para
+  outras UFs passam a citar normas estaduais indevidas.
+- **Teto dos trechos**: o Manual MG gerou trechos de até cerca de 14.700 tokens, acima do limite do
+  modelo de embeddings (8.191), e a OpenAI recusou a ingestão com 400. `ParametrosSegmentacao.TetoTokens`
+  (padrão 4.000, estimado) divide qualquer trecho maior por linhas, mantendo localização e páginas. O
+  maior trecho do Guia 3.2.4 tem cerca de 3.844 tokens, então o Guia não muda (723 trechos).
+- **Material de terceiros**: o PDF de erros comuns do blog TecnoSpeed entrou como `interno`
+  (`material_interno`), porque não é norma; respostas que o usam continuam sinalizadas.

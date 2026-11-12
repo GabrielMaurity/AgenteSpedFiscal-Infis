@@ -42,7 +42,8 @@ public sealed class ConsultaBase(
                 inicio,
                 fim,
                 classificacoes,
-                requisicao.TopK ?? parametros.TopKPadrao),
+                requisicao.TopK ?? parametros.TopKPadrao,
+                [.. (requisicao.TiposDocumentoAdicionais ?? []).Where(t => t != requisicao.TipoDocumento).Distinct()]),
             cancelamento);
 
         return new BuscarTrechosResponse(ContratoMcp.Versao, [.. encontrados.Select(Mapear)], encontrados.Count == 0);

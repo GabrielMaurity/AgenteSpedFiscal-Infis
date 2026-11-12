@@ -23,12 +23,13 @@ public sealed class FerramentasMcp(ConsultaBase casos)
         [Description("Período AAAA-MM; seleciona a versão vigente.")] string? periodo = null,
         [Description("Classificações aceitas: oficial, interno. Padrão: ambas.")] Classificacao[]? classificacoes = null,
         [Description("Quantidade de trechos, de 1 a 20.")] int? topK = null,
+        [Description("Outros tipos de documento oficial a incluir, filtrados pela vigência no período (ex.: outro_oficial, legislacao). Até 10.")] string[]? tiposDocumentoAdicionais = null,
         CancellationToken cancellationToken = default)
     {
         try
         {
             return await casos.BuscarTrechosAsync(
-                new BuscarTrechosRequest(consulta, tipoDocumento, correlacaoId, versao, periodo, classificacoes, topK),
+                new BuscarTrechosRequest(consulta, tipoDocumento, correlacaoId, versao, periodo, classificacoes, topK, tiposDocumentoAdicionais),
                 cancellationToken);
         }
         catch (RequisicaoInvalidaException invalida)

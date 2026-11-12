@@ -29,10 +29,12 @@ public sealed record BuscarTrechosRequest(
     string? Versao = null,
     string? Periodo = null,
     IReadOnlyList<Classificacao>? Classificacoes = null,
-    int? TopK = null)
+    int? TopK = null,
+    IReadOnlyList<string>? TiposDocumentoAdicionais = null)
 {
     public const int TamanhoMaximoConsulta = 1_000;
     public const int TopKMaximo = 20;
+    public const int TiposAdicionaisMaximo = 10;
 
     /// <summary>Retorna a mensagem de erro do contrato, ou nulo quando a requisição é válida.</summary>
     public string? Validar()
@@ -65,6 +67,12 @@ public sealed record BuscarTrechosRequest(
         if (TopK is < 1 or > TopKMaximo)
         {
             return $"topK deve estar entre 1 e {TopKMaximo}.";
+        }
+
+        if (TiposDocumentoAdicionais is { } tipos
+            && (tipos.Count > TiposAdicionaisMaximo || tipos.Any(string.IsNullOrWhiteSpace)))
+        {
+            return $"tiposDocumentoAdicionais aceita até {TiposAdicionaisMaximo} tipos, sem valores vazios.";
         }
 
         return null;

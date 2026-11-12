@@ -49,6 +49,8 @@ Evidências nas URLs públicas: health live/ready 200 nas duas APIs (Neon e Atla
 
 **Logs (2026-11-12)**: sem OTLP, as APIs passam a escrever cada log no stdout como uma linha JSON (timestamp, nível, categoria, mensagem, traceId, exceção), depois do mascaramento e de forma síncrona (`ExportadorLogConsole`, `ObservabilidadeExtensions.ConfigurarLogs`; testes `LogConsoleTests` nas duas APIs). EF Core, `HttpClient` e Polly em Warning: uma conversa caiu de cerca de 100 para 15 linhas nos Runtime Logs; varredura sem CNPJ, linha EFD, token ou chave.
 
+**Novos documentos em produção (2026-11-12)**: ingeridos pela URL pública com o token admin. Blog TecnoSpeed (interno, 2 trechos) ativo de primeira. Manual Consolidado MG v.2025.02 (2,5 MB, 186 páginas, oficial/`outro_oficial`) falhou: a OpenAI recusou com 400 trechos acima de 8.191 tokens; com o teto de 4.000 tokens por trecho (research R-39) foi reprocessado e ficou ativo com 85 trechos em cerca de 10 s. A busca passou a incluir outros tipos oficiais: a pergunta sobre o FEM em MG citou o manual MG (oficial, proximidade 0,6844); a de erros comuns citou o blog (interno) e trechos oficiais; a do IBS no VL_DOC seguiu no Guia 3.2.4 (Cap. I, Seção 10). Suíte: 494 testes aprovados.
+
 **Pendências**: importar a tabela de NCM no Neon; T019 a T021.
 
 ## Phase 5: Aceite
