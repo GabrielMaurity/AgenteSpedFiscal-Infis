@@ -54,6 +54,31 @@ public sealed class McpRagOpcoes
     [Required(AllowEmptyStrings = false)]
     [Url]
     public string Url { get; set; } = "";
+
+    /// <summary>
+    /// Token Bearer de serviço com audiência api-rag. Em desenvolvimento vem do dotnet user-jwts; o fluxo
+    /// client credentials de produção depende do ADR-0004. Sem token, a chamada vai sem Authorization, o que só
+    /// funciona com a Api.Rag em modo sem autenticação (Autenticacao:Desabilitada, só em Development).
+    /// </summary>
+    public string? TokenServico { get; set; }
+}
+
+public sealed class BaseInformacaoOpcoes
+{
+    public const string Secao = "BaseInformacao";
+
+    [Required(AllowEmptyStrings = false)]
+    public string TipoDocumento { get; set; } = "guia_pratico_efd_icms_ipi";
+
+    /// <summary>Valor inicial do research R-13; fixado após os evals (T106).</summary>
+    [Range(1, 20)]
+    public int TopK { get; set; } = 8;
+
+    [Range(1, 50)]
+    public int ConsultasPorExecucao { get; set; } = 5;
+
+    [Range(1, 300)]
+    public int TimeoutFerramentaSegundos { get; set; } = 15;
 }
 
 public sealed class ArquivosOpcoes
@@ -114,4 +139,25 @@ public sealed class LimitesOpcoes
 
     [Range(1, 10_000)]
     public int AchadosPorPagina { get; set; } = 500;
+}
+
+/// <summary>
+/// Recuperação de itens interrompidos (feature 002, FR-P06). Com instância única, a inicialização trata
+/// todos os itens em andamento, pois nada mais os processa. Com várias instâncias (Vercel), só os parados
+/// há mais que o limiar, que deve passar da duração máxima de uma requisição na plataforma.
+/// </summary>
+public sealed class RecuperacaoOpcoes
+{
+    public const string Secao = "Recuperacao";
+
+    public bool InstanciaUnica { get; set; } = true;
+
+    [Range(1, 1_440)]
+    public int LimiarMinutos { get; set; } = 10;
+
+    [Range(1, 1_440)]
+    public int IntervaloVarreduraMinutos { get; set; } = 1;
+
+    /// <summary>Nulo com instância única: todos os itens em andamento são tratados.</summary>
+    public TimeSpan? Limiar => InstanciaUnica ? null : TimeSpan.FromMinutes(LimiarMinutos);
 }

@@ -40,14 +40,14 @@ public sealed class A2aSemBancoTests(FabricaApiAgente fabrica) : IClassFixture<F
     }
 
     [Fact]
-    public async Task Cartao_so_anuncia_a_capacidade_implementada()
+    public async Task Cartao_anuncia_as_duas_skills_implementadas()
     {
         var resposta = await Cliente(Papeis.AgenteExterno).GetAsync(Cartao, Cancelamento);
 
         Assert.Equal(HttpStatusCode.OK, resposta.StatusCode);
         using var cartao = JsonDocument.Parse(await resposta.Content.ReadAsStringAsync(Cancelamento));
         var skills = cartao.RootElement.GetProperty("skills").EnumerateArray().Select(s => s.GetProperty("id").GetString());
-        Assert.Equal(["validar-efd-icms-ipi"], skills);
+        Assert.Equal(["validar-efd-icms-ipi", "consultar-efd-icms-ipi"], skills);
         Assert.True(cartao.RootElement.TryGetProperty("securitySchemes", out _));
     }
 }

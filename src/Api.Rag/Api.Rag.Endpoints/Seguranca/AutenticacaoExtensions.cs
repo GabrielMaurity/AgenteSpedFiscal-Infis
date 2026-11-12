@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 
@@ -16,10 +17,20 @@ public static class AutenticacaoExtensions
     /// <summary>
     /// JWT Bearer lido de Authentication:Schemes:Bearer. REST de administração exige o papel
     /// admin_base; o endpoint /mcp exige token de serviço com audiência api-rag (P-07).
+    /// Em Development, com Autenticacao:Desabilitada = true, o esquema Bearer vira o usuário local de
+    /// <see cref="AutenticacaoDesenvolvimentoHandler"/> e as mesmas políticas continuam valendo.
     /// </summary>
-    public static IServiceCollection AddAutenticacaoRag(this IServiceCollection services)
+    public static IServiceCollection AddAutenticacaoRag(this IServiceCollection services, IConfiguration configuracao, IHostEnvironment ambiente)
     {
-        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
+        var autenticacao = services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme);
+        if (AutenticacaoDesenvolvimentoHandler.Ativa(configuracao, ambiente))
+        {
+            autenticacao.AddScheme<AuthenticationSchemeOptions, AutenticacaoDesenvolvimentoHandler>(JwtBearerDefaults.AuthenticationScheme, null);
+        }
+        else
+        {
+            autenticacao.AddJwtBearer();
+        }
 
         services.AddAuthorizationBuilder()
             .SetFallbackPolicy(Base().Build())

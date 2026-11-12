@@ -1,6 +1,8 @@
+using Api.Agente.Application.Analise;
 using Api.Agente.Application.Execucoes;
 using Api.Agente.Application.TabelasReferencia;
 using Api.Agente.Domain.Achados;
+using Api.Agente.Domain.Analise;
 using Api.Agente.Domain.Efd;
 using Api.Agente.Domain.Efd.Identificacao;
 using Api.Agente.Domain.Efd.Leiaute;
@@ -21,12 +23,13 @@ public sealed class ValidarArquivoHandler(
     DadosEfd dados,
     IRepositorioNcm tabelasNcm,
     ParametrosValidacao parametros,
+    AnalisadorExecucao analisador,
     TimeProvider relogio)
 {
-    /// <summary>Etapas que dependem da base de informação e do LLM, entregues na história 3.</summary>
-    private static readonly int[] EtapasDeAnalise = [5, 6, 7, 8];
-
-    private const string MotivoAnaliseIndisponivel = "Consulta à base de informação e análise da IA ainda não disponíveis nesta versão.";
+    public const string MotivoBaseIndisponivel = "Base de informação indisponível: a consulta não foi realizada.";
+    public const string MotivoAnaliseSemBase = "Análise da IA não executada: depende da consulta à base de informação, que falhou.";
+    public const string MotivoModeloIndisponivel = "Análise da IA não realizada: o provedor do modelo não respondeu.";
+    public const string MotivoSaidaInvalida = "A saída da IA não passou na validação após as retentativas; o relatório determinístico é entregue sem a análise.";
     private const string MotivoFalhaTecnica = "Falha técnica ao processar o arquivo. Envie o arquivo novamente.";
     private const string MotivoInterrompido = "Etapa não executada: o processamento foi interrompido antes dela.";
 
@@ -89,10 +92,15 @@ public sealed class ValidarArquivoHandler(
         }
     }
 
-    /// <summary>Execuções em andamento quando o serviço reiniciou viram falha, pois o arquivo se perdeu (research R-04).</summary>
-    public async Task FalharEmAndamentoAsync(CancellationToken cancelamento)
+    /// <summary>
+    /// Execuções interrompidas viram falha, pois o arquivo se perdeu (research R-04). Sem limiar (instância
+    /// única), todas as em andamento; com limiar (várias instâncias), só as paradas há mais que ele, para não
+    /// encerrar o que outra instância ainda processa (feature 002, FR-P06).
+    /// </summary>
+    public async Task FalharEmAndamentoAsync(TimeSpan? limiar, CancellationToken cancelamento)
     {
-        foreach (var execucao in await repositorio.ListarEmAndamentoAsync(cancelamento))
+        DateTimeOffset? atualizadasAntesDe = limiar is { } valor ? relogio.GetUtcNow() - valor : null;
+        foreach (var execucao in await repositorio.ListarEmAndamentoAsync(atualizadasAntesDe, cancelamento))
         {
             RegistrarFalha(
                 execucao,
@@ -144,15 +152,82 @@ public sealed class ValidarArquivoHandler(
         execucao.AplicarResultado(resultado.Achados, resultado.Totais, resultado.RegrasExecutadas, resultado.NaoRealizadas, resultado.ForaDoAlcance);
         execucao.AtualizarEtapa(4, StatusEtapa.Concluida, relogio.GetUtcNow());
 
-        foreach (var etapa in EtapasDeAnalise)
-        {
-            execucao.AtualizarEtapa(etapa, StatusEtapa.NaoExecutada, relogio.GetUtcNow(), MotivoAnaliseIndisponivel);
-            execucao.RegistrarValidacaoNaoRealizada(new ValidacaoNaoRealizada($"etapa-{etapa}", Categoria.AusenciaEvidencias, MotivoAnaliseIndisponivel));
-        }
+        var analiseAceita = await AnalisarAsync(execucao, cancelamento);
 
         execucao.AtualizarEtapa(9, StatusEtapa.Concluida, relogio.GetUtcNow());
-        execucao.Concluir(analiseIaAceita: false);
+        execucao.Concluir(analiseAceita);
         await repositorio.SalvarAsync(execucao, cancelamento);
+    }
+
+    /// <summary>
+    /// Etapas 5 a 8. Falha da base, do modelo ou da validação da saída nunca derruba a execução: os achados
+    /// determinísticos são entregues e a limitação fica em validacoesNaoRealizadas (FR-084, SC-004).
+    /// </summary>
+    private async Task<bool> AnalisarAsync(Execucao execucao, CancellationToken cancelamento)
+    {
+        execucao.AvancarPara(EstadoExecucao.ConsultandoBase);
+        execucao.AtualizarEtapa(5, StatusEtapa.Executando, relogio.GetUtcNow());
+        await repositorio.SalvarAsync(execucao, cancelamento);
+
+        var recuperacao = new ContextoRecuperacao();
+        IReadOnlyList<string> limitacoesBase;
+        try
+        {
+            limitacoesBase = await analisador.ConsultarBaseAsync(execucao, recuperacao, cancelamento);
+        }
+        catch (Exception excecao) when (excecao is not OperationCanceledException || !cancelamento.IsCancellationRequested)
+        {
+            var agora = relogio.GetUtcNow();
+            execucao.AtualizarEtapa(5, StatusEtapa.Falha, agora, MotivoBaseIndisponivel);
+            execucao.RegistrarValidacaoNaoRealizada(new ValidacaoNaoRealizada("etapa-5", Categoria.FalhaTecnica, MotivoBaseIndisponivel));
+            foreach (var etapa in new[] { 6, 7, 8 })
+            {
+                execucao.AtualizarEtapa(etapa, StatusEtapa.NaoExecutada, agora, MotivoAnaliseSemBase);
+            }
+
+            execucao.RegistrarValidacaoNaoRealizada(new ValidacaoNaoRealizada("etapa-7", Categoria.FalhaTecnica, MotivoAnaliseSemBase));
+            return false;
+        }
+
+        execucao.AtualizarEtapa(5, StatusEtapa.Concluida, relogio.GetUtcNow(), limitacoesBase.Count > 0 ? limitacoesBase[0] : null);
+        execucao.AvancarPara(EstadoExecucao.AnalisandoIa);
+        execucao.AtualizarEtapa(6, StatusEtapa.Executando, relogio.GetUtcNow());
+        execucao.AtualizarEtapa(7, StatusEtapa.Executando, relogio.GetUtcNow());
+        await repositorio.SalvarAsync(execucao, cancelamento);
+
+        AnaliseIa analise;
+        try
+        {
+            analise = await analisador.AnalisarAsync(execucao, recuperacao, limitacoesBase, cancelamento);
+        }
+        catch (Exception excecao) when (excecao is not OperationCanceledException || !cancelamento.IsCancellationRequested)
+        {
+            var agora = relogio.GetUtcNow();
+            execucao.AtualizarEtapa(6, StatusEtapa.Falha, agora, MotivoModeloIndisponivel);
+            execucao.AtualizarEtapa(7, StatusEtapa.Falha, agora, MotivoModeloIndisponivel);
+            execucao.AtualizarEtapa(8, StatusEtapa.NaoExecutada, agora, MotivoModeloIndisponivel);
+            execucao.RegistrarValidacaoNaoRealizada(new ValidacaoNaoRealizada("etapa-7", Categoria.FalhaTecnica, MotivoModeloIndisponivel));
+            execucao.RegistrarAnaliseIa(new AnaliseIa(StatusAnaliseIa.Falha, analisador.Modelo, 0, null, [], false));
+            return false;
+        }
+
+        execucao.AtualizarEtapa(6, StatusEtapa.Concluida, relogio.GetUtcNow());
+        execucao.AtualizarEtapa(7, StatusEtapa.Concluida, relogio.GetUtcNow());
+        execucao.AvancarPara(EstadoExecucao.ValidandoSaida);
+
+        var aceita = analise.Status == StatusAnaliseIa.Aceita;
+        if (aceita)
+        {
+            execucao.AtualizarEtapa(8, StatusEtapa.Concluida, relogio.GetUtcNow());
+        }
+        else
+        {
+            execucao.AtualizarEtapa(8, StatusEtapa.Falha, relogio.GetUtcNow(), MotivoSaidaInvalida);
+            execucao.RegistrarValidacaoNaoRealizada(new ValidacaoNaoRealizada("etapa-8", Categoria.FalhaTecnica, MotivoSaidaInvalida));
+        }
+
+        execucao.RegistrarAnaliseIa(analise);
+        return aceita;
     }
 
     private async Task<(IdentificacaoArquivo? Identificacao, DefinicaoLeiaute? Leiaute, string? Recusa)> IdentificarAsync(string caminho, CancellationToken cancelamento)

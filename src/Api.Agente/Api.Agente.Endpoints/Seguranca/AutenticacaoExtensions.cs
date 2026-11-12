@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 
@@ -24,11 +25,21 @@ public static class AutenticacaoExtensions
 
     /// <summary>
     /// JWT Bearer lido de Authentication:Schemes:Bearer. Por padrão, todo endpoint exige usuário
-    /// autenticado com org_id (FR-080); as exceções declaram AllowAnonymous.
+    /// autenticado com org_id (FR-080); as exceções declaram AllowAnonymous. Em Development, com
+    /// Autenticacao:Desabilitada = true, o esquema Bearer vira o usuário local de
+    /// <see cref="AutenticacaoDesenvolvimentoHandler"/> e as mesmas políticas continuam valendo.
     /// </summary>
-    public static IServiceCollection AddAutenticacaoAgente(this IServiceCollection services)
+    public static IServiceCollection AddAutenticacaoAgente(this IServiceCollection services, IConfiguration configuracao, IHostEnvironment ambiente)
     {
-        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
+        var autenticacao = services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme);
+        if (AutenticacaoDesenvolvimentoHandler.Ativa(configuracao, ambiente))
+        {
+            autenticacao.AddScheme<AuthenticationSchemeOptions, AutenticacaoDesenvolvimentoHandler>(JwtBearerDefaults.AuthenticationScheme, null);
+        }
+        else
+        {
+            autenticacao.AddJwtBearer();
+        }
 
         services.AddAuthorizationBuilder()
             .SetFallbackPolicy(Base().Build())

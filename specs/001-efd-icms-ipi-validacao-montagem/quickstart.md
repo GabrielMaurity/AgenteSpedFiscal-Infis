@@ -27,6 +27,29 @@ docker compose up -d --build
 Esperado: containers `api-agente` (porta 8080), `api-rag` (8081), `postgres`, `mongo` e
 `aspire-dashboard` (18888) em execução; `GET /health/ready` retorna 200 nas duas APIs.
 
+## 1.1 Alternativa: rodar as APIs pelo Visual Studio (research R-37)
+
+1. Subir só os bancos e o dashboard: `docker compose up -d postgres mongo aspire-dashboard`.
+2. Em cada projeto `*.Endpoints`, botão direito → **Manage User Secrets**, com as senhas do `.env`:
+   - `Api.Rag.Endpoints`: `Postgres:ConnectionString`
+     (`Host=localhost;Port=5432;Database=rag;Username=rag;Password=<POSTGRES_RAG_PASSWORD>`),
+     `Persistencia:AplicarMigracoesNaInicializacao = true`, `OpenAi:ApiKey` e, opcional,
+     `OTEL_EXPORTER_OTLP_ENDPOINT = http://localhost:18889`.
+   - `Api.Agente.Endpoints`: `Postgres:ConnectionString` (banco `agente`, usuário `agente`),
+     `MongoDb:ConnectionString` (`mongodb://agente:<MONGO_ROOT_PASSWORD>@localhost:27018/?authSource=admin`),
+     `MongoDb:Database = agente`, `Persistencia:AplicarMigracoesNaInicializacao = true`,
+     `OpenAi:ApiKey`, `OpenAi:ModeloAnalise`, `McpRag:Url = http://localhost:5233/mcp`,
+     `A2a:UrlBase = http://localhost:5046` e, opcional, o OTLP.
+3. Solução → **Configure Startup Projects** → **Multiple startup projects**: `Api.Rag.Endpoints` e
+   `Api.Agente.Endpoints` como **Start**, perfil `http`. F5 abre o Swagger em
+   `http://localhost:5233/swagger` e `http://localhost:5046/swagger`.
+4. O perfil `http` liga `Autenticacao__Desabilitada`: nenhum token é necessário. Para testar com
+   JWT, remova essa variável e siga o §2.
+5. Para ver os bancos: `docker compose up -d pgadmin` e abrir `http://localhost:5050` (sem login,
+   só na máquina local). Os servidores `rag` e `agente` já aparecem; a senha é pedida na conexão
+   (`POSTGRES_RAG_PASSWORD` e `POSTGRES_AGENTE_PASSWORD` do `.env`). Para o MongoDB, use o
+   MongoDB Compass em `localhost:27018`.
+
 ## 2. Gerar tokens de desenvolvimento
 
 As duas APIs usam a mesma chave no compose (`JWT_SIGNING_KEY_BASE64`). Antes do passo 1, copie para o

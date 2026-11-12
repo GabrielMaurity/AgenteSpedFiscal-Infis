@@ -81,7 +81,13 @@ public sealed partial class BuscaHibrida(RagDbContext banco) : IBuscaTrechos
             .Join(banco.Documentos.AsNoTracking(), t => t.DocumentoId, d => d.Id, (t, d) => new Candidato { Trecho = t, Documento = d })
             .ToDictionaryAsync(c => c.Trecho.Id, cancelamento);
 
-        return [.. melhores.Select(m => Montar(carregados[m.Key], m.Value))];
+        // Similaridade de cosseno só dos trechos devolvidos: a pontuação RRF ordena, mas não fica entre 0 e 1.
+        var distancias = await banco.Trechos.AsNoTracking()
+            .Where(t => ids.Contains(t.Id))
+            .Select(t => new { t.Id, Distancia = t.Embedding.CosineDistance(vetor) })
+            .ToDictionaryAsync(t => t.Id, t => t.Distancia, cancelamento);
+
+        return [.. melhores.Select(m => Montar(carregados[m.Key], m.Value, Similaridade(distancias[m.Key])))];
     }
 
     public async Task<TrechoEncontrado?> ObterAsync(Guid trechoId, CancellationToken cancelamento)
@@ -91,7 +97,7 @@ public sealed partial class BuscaHibrida(RagDbContext banco) : IBuscaTrechos
             .Join(banco.Documentos.AsNoTracking(), t => t.DocumentoId, d => d.Id, (t, d) => new Candidato { Trecho = t, Documento = d })
             .Where(c => c.Documento.Status == StatusDocumento.Ativo)
             .FirstOrDefaultAsync(cancelamento);
-        return candidato is null ? null : Montar(candidato, 1);
+        return candidato is null ? null : Montar(candidato, 1, null);
     }
 
     /// <summary>Oficial: tipo e versão, ou vigência no período. Interno: vigência, quando há período (research R-27).</summary>
@@ -124,12 +130,16 @@ public sealed partial class BuscaHibrida(RagDbContext banco) : IBuscaTrechos
         [.. Codigo().Matches(texto).Select(m => m.Value).Where(c => c.Any(char.IsAsciiDigit) || c.Contains('_', StringComparison.Ordinal))
             .Distinct(StringComparer.Ordinal).Take(CodigosMaximos)];
 
-    private static TrechoEncontrado Montar(Candidato c, double pontuacao) => new(
+    private static TrechoEncontrado Montar(Candidato c, double pontuacao, double? similaridade) => new(
         c.Trecho.Id,
         c.Trecho.Texto,
         MapeamentoDocumento.ParaDominio(c.Documento),
         MapeamentoDocumento.Localizacao(c.Trecho.Localizacao),
-        pontuacao);
+        pontuacao,
+        similaridade);
+
+    /// <summary>1 − distância de cosseno, limitada a [0, 1] (a distância vai de 0 a 2).</summary>
+    internal static double Similaridade(double distancia) => Math.Round(Math.Clamp(1 - distancia, 0, 1), 4);
 
     [GeneratedRegex(@"\b(?:[0-9A-Z]{4}|[A-Z]{2,}(?:_[A-Z0-9]+)+)\b")]
     private static partial Regex Codigo();

@@ -16,7 +16,7 @@ builder.Services
     .AddPersistenciaRag()
     .AddBaseInformacao()
     .AddErrosPadronizados()
-    .AddAutenticacaoRag()
+    .AddAutenticacaoRag(builder.Configuration, builder.Environment)
     .AddSaude()
     .AddDocumentacaoApi();
 

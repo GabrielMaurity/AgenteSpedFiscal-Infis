@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel;
 using System.Globalization;
 using System.Security.Claims;
 using Api.Rag.Application.Base;
@@ -28,6 +30,40 @@ public sealed record DocumentoResposta(
     string? MotivoFalha,
     int? QuantidadeTrechos);
 
+/// <summary>Formulário de ingestão, só para o documento OpenAPI (contrato api-rag.openapi.yaml).</summary>
+public sealed class FormularioIngestao
+{
+    [Required]
+    [Description("Documento em PDF (.pdf), texto (.txt) ou Markdown (.md).")]
+    public required IFormFile Arquivo { get; init; }
+
+    [Required]
+    [Description("oficial ou interno. Imutável depois da ingestão.")]
+    public required string Classificacao { get; init; }
+
+    [Required]
+    [Description("Oficial: guia_pratico_efd_icms_ipi, nota_tecnica_leiaute, ato_cotepe, legislacao ou outro_oficial. Interno: material_interno.")]
+    public required string TipoDocumento { get; init; }
+
+    [Required]
+    [Description("Título do documento, como Guia Prático EFD ICMS/IPI.")]
+    public required string Titulo { get; init; }
+
+    [Required]
+    [Description("Origem do documento, como SPED ou Infis.")]
+    public required string Origem { get; init; }
+
+    [Required]
+    [Description("Versão do documento, como 3.2.4.")]
+    public required string Versao { get; init; }
+
+    [Description("Início da vigência, AAAA-MM-DD.")]
+    public string? VigenciaInicio { get; init; }
+
+    [Description("Fim da vigência, AAAA-MM-DD.")]
+    public string? VigenciaFim { get; init; }
+}
+
 /// <summary>Administração da base de informação (contrato api-rag.openapi.yaml). Somente admin_base.</summary>
 public static class DocumentosEndpoints
 {
@@ -35,7 +71,16 @@ public static class DocumentosEndpoints
     {
         var grupo = rotas.MapGroup("/api/v1/documentos").RequireAuthorization(Politicas.AdminBase);
 
-        grupo.MapPost("/", IngerirAsync).DisableAntiforgery();
+        // O endpoint lê o formulário direto do HttpContext; os metadados abaixo só descrevem o contrato
+        // no OpenAPI, para o Swagger exibir o envio do arquivo e dos campos.
+        grupo.MapPost("/", IngerirAsync)
+            .DisableAntiforgery()
+            .Accepts<FormularioIngestao>("multipart/form-data")
+            .Produces(StatusCodes.Status202Accepted)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status413PayloadTooLarge)
+            .ProducesProblem(StatusCodes.Status415UnsupportedMediaType);
         grupo.MapGet("/", ListarAsync);
         grupo.MapGet("/{documentoId:guid}", ObterAsync);
         grupo.MapPost("/{documentoId:guid}/reprocessar", ReprocessarAsync);

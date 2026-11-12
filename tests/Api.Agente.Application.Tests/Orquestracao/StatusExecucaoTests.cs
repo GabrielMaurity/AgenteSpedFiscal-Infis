@@ -1,7 +1,10 @@
+using Api.Agente.Application.Analise;
 using Api.Agente.Application.Execucoes;
+using Api.Agente.Application.Tests.Fakes;
 using Api.Agente.Application.TabelasReferencia;
 using Api.Agente.Application.Validacao;
 using Api.Agente.Domain.Achados;
+using Api.Agente.Domain.Analise;
 using Api.Agente.Domain.Efd;
 using Api.Agente.Domain.Efd.Validacao.Negocio;
 using Api.Agente.Domain.Execucoes;
@@ -15,7 +18,7 @@ public class StatusExecucaoTests
 
     private static CancellationToken Cancelamento => TestContext.Current.CancellationToken;
 
-    private sealed class RepositorioMemoria : IRepositorioExecucoes
+    internal sealed class RepositorioMemoria : IRepositorioExecucoes
     {
         public Dictionary<Guid, Execucao> Itens { get; } = [];
 
@@ -34,11 +37,11 @@ public class StatusExecucaoTests
         public Task<bool> ExcluirAsync(string orgId, Guid id, CancellationToken cancelamento) =>
             Task.FromResult(Itens.Remove(id));
 
-        public Task<IReadOnlyList<Execucao>> ListarEmAndamentoAsync(CancellationToken cancelamento) =>
-            Task.FromResult<IReadOnlyList<Execucao>>([.. Itens.Values.Where(e => !e.EstaFinalizada)]);
+        public Task<IReadOnlyList<Execucao>> ListarEmAndamentoAsync(DateTimeOffset? atualizadasAntesDe, CancellationToken cancelamento) =>
+            Task.FromResult<IReadOnlyList<Execucao>>([.. Itens.Values.Where(e => !e.EstaFinalizada && (atualizadasAntesDe is null || e.AtualizadoEm < atualizadasAntesDe))]);
     }
 
-    private sealed class ArmazenamentoMemoria : IArmazenamentoTemporario
+    internal sealed class ArmazenamentoMemoria : IArmazenamentoTemporario
     {
         public Dictionary<string, byte[]> Arquivos { get; } = [];
 
@@ -66,7 +69,7 @@ public class StatusExecucaoTests
         public void Excluir(string caminho) => Arquivos.Remove(caminho);
     }
 
-    private sealed class FilaMemoria : IFilaExecucoes
+    internal sealed class FilaMemoria : IFilaExecucoes
     {
         public Queue<ItemFila> Itens { get; } = new();
 
@@ -77,7 +80,7 @@ public class StatusExecucaoTests
         }
     }
 
-    private sealed class LimitadorMemoria(int maximo = 10) : ILimitadorExecucoes
+    internal sealed class LimitadorMemoria(int maximo = 10) : ILimitadorExecucoes
     {
         public int EmUso { get; private set; }
 
@@ -95,7 +98,7 @@ public class StatusExecucaoTests
         public void Liberar(string orgId) => EmUso--;
     }
 
-    private sealed class TabelasNcmMemoria : IRepositorioNcm
+    internal sealed class TabelasNcmMemoria : IRepositorioNcm
     {
         public ITabelaNcm? Vigente { get; set; }
 
@@ -109,16 +112,20 @@ public class StatusExecucaoTests
             Task.FromResult(Vigente);
     }
 
-    private sealed class Cenario
+    internal sealed class Cenario
     {
         public RepositorioMemoria Repositorio { get; } = new();
         public ArmazenamentoMemoria Armazenamento { get; } = new();
         public FilaMemoria Fila { get; } = new();
         public LimitadorMemoria Limitador { get; } = new();
         public TabelasNcmMemoria TabelasNcm { get; } = new();
+        public BaseInformacaoFalsa Base { get; set; } = new();
+        public ModeloFalso Modelo { get; set; } = new();
+
+        public AnalisadorExecucao Analisador => new(Base, Modelo, new ParametrosAnalise(2, 5, 20));
 
         public ValidarArquivoHandler Handler => new(
-            Repositorio, Armazenamento, Fila, Limitador, Dados, TabelasNcm, new ParametrosValidacao(1_000), TimeProvider.System);
+            Repositorio, Armazenamento, Fila, Limitador, Dados, TabelasNcm, new ParametrosValidacao(1_000), Analisador, TimeProvider.System);
 
         public async Task<Execucao> ProcessarAsync(string caso)
         {
@@ -130,18 +137,56 @@ public class StatusExecucaoTests
     }
 
     [Fact]
-    public async Task Arquivo_valido_fica_com_limitacoes_enquanto_a_analise_nao_executa()
+    public async Task Sem_a_base_o_arquivo_valido_fica_com_limitacoes_e_a_ia_nao_executa()
     {
-        var execucao = await new Cenario().ProcessarAsync("valido-perfil-a");
+        var cenario = new Cenario();
+
+        var execucao = await cenario.ProcessarAsync("valido-perfil-a");
 
         Assert.Equal(EstadoExecucao.ConcluidaComLimitacoes, execucao.Estado);
         Assert.Empty(execucao.Achados);
         Assert.Equal("020", execucao.Identificacao!.CodVer);
         Assert.Equal(StatusEtapa.Concluida, execucao.Etapas[3].Status);
-        Assert.All(execucao.Etapas.Skip(4).Take(4), e => Assert.Equal(StatusEtapa.NaoExecutada, e.Status));
+        Assert.Equal(StatusEtapa.Falha, execucao.Etapas[4].Status);
+        Assert.All(execucao.Etapas.Skip(5).Take(3), e => Assert.Equal(StatusEtapa.NaoExecutada, e.Status));
         Assert.Equal(StatusEtapa.Concluida, execucao.Etapas[8].Status);
-        Assert.Contains(execucao.ValidacoesNaoRealizadas, v => v.Referencia == "etapa-5");
+        Assert.Equal(Categoria.FalhaTecnica, Assert.Single(execucao.ValidacoesNaoRealizadas, v => v.Referencia == "etapa-5").Categoria);
+        Assert.Empty(cenario.Modelo.Pedidos);
         Assert.True(execucao.RevisaoHumanaNecessaria);
+    }
+
+    [Fact]
+    public async Task Com_base_e_analise_aceita_o_arquivo_valido_fica_concluido()
+    {
+        var cenario = new Cenario
+        {
+            Base = BaseInformacaoFalsa.ComTrechos(),
+            Modelo = new ModeloFalso(RespostasLlm.Analise()),
+        };
+        cenario.TabelasNcm.Vigente = new TabelaNcm("2026.1", [], new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31));
+
+        var execucao = await cenario.ProcessarAsync("valido-perfil-a");
+
+        Assert.Equal(EstadoExecucao.Concluida, execucao.Estado);
+        Assert.Empty(execucao.ValidacoesNaoRealizadas);
+        Assert.All(execucao.Etapas, e => Assert.Equal(StatusEtapa.Concluida, e.Status));
+        Assert.Equal(StatusAnaliseIa.Aceita, execucao.AnaliseIa!.Status);
+        Assert.Equal("modelo-falso", execucao.AnaliseIa.Modelo);
+        Assert.False(execucao.RevisaoHumanaNecessaria);
+    }
+
+    [Fact]
+    public async Task Modelo_indisponivel_entrega_o_resultado_deterministico_com_limitacao()
+    {
+        var cenario = new Cenario { Base = BaseInformacaoFalsa.ComTrechos() };
+
+        var execucao = await cenario.ProcessarAsync("unidade-sem-0190");
+
+        Assert.Equal(EstadoExecucao.ConcluidaComLimitacoes, execucao.Estado);
+        Assert.NotEmpty(execucao.Achados);
+        Assert.Equal(StatusEtapa.Falha, execucao.Etapas[6].Status);
+        Assert.Equal(Categoria.FalhaTecnica, Assert.Single(execucao.ValidacoesNaoRealizadas, v => v.Referencia == "etapa-7").Categoria);
+        Assert.Equal(StatusAnaliseIa.Falha, execucao.AnaliseIa!.Status);
     }
 
     [Theory]
@@ -204,7 +249,7 @@ public class StatusExecucaoTests
     {
         var cenario = new Cenario();
         var limitado = new ValidarArquivoHandler(
-            cenario.Repositorio, cenario.Armazenamento, cenario.Fila, new LimitadorMemoria(0), Dados, cenario.TabelasNcm, new ParametrosValidacao(1), TimeProvider.System);
+            cenario.Repositorio, cenario.Armazenamento, cenario.Fila, new LimitadorMemoria(0), Dados, cenario.TabelasNcm, new ParametrosValidacao(1), cenario.Analisador, TimeProvider.System);
 
         await Assert.ThrowsAsync<LimiteExecucoesException>(() => limitado.ReceberAsync(
             new ComandoValidacao(new MemoryStream([1]), "a.txt", "org", "u", "c", CanalExecucao.Rest), Cancelamento));
@@ -246,7 +291,7 @@ public class StatusExecucaoTests
         Assert.Equal(
             [RegrasNegocio.LacunaNumeracao, RegrasNegocio.TributosReforma],
             execucao.ForaDoAlcance.Select(f => f.Referencia).Order());
-        // Com a tabela de NCM, sobram só as etapas de base e IA, que chegam na US3.
+        // Com a tabela de NCM e a base parada, sobram só as etapas de base e IA.
         Assert.All(execucao.ValidacoesNaoRealizadas, v => Assert.StartsWith("etapa-", v.Referencia, StringComparison.Ordinal));
     }
 
@@ -265,13 +310,30 @@ public class StatusExecucaoTests
     }
 
     [Fact]
+    public async Task Com_varias_instancias_so_as_execucoes_paradas_alem_do_limiar_viram_falha()
+    {
+        var cenario = new Cenario();
+        var agora = DateTimeOffset.UtcNow;
+        var ativa = Execucao.Criar(Guid.NewGuid(), "org", "u", "c1", CanalExecucao.Rest, agora.AddMinutes(-2));
+        var parada = Execucao.Criar(Guid.NewGuid(), "org", "u", "c2", CanalExecucao.Rest, agora.AddMinutes(-20));
+        await cenario.Repositorio.SalvarAsync(ativa, Cancelamento);
+        await cenario.Repositorio.SalvarAsync(parada, Cancelamento);
+
+        // Outra instância inicia: com o limiar, não encerra o que a primeira ainda processa (feature 002, FR-P06).
+        await cenario.Handler.FalharEmAndamentoAsync(TimeSpan.FromMinutes(10), Cancelamento);
+
+        Assert.False(cenario.Repositorio.Itens[ativa.Id].EstaFinalizada);
+        Assert.Equal(EstadoExecucao.Falha, cenario.Repositorio.Itens[parada.Id].Estado);
+    }
+
+    [Fact]
     public async Task Reinicio_do_servico_marca_as_execucoes_em_andamento_como_falha()
     {
         var cenario = new Cenario();
         await using var arquivo = new MemoryStream([1]);
         var recebida = await cenario.Handler.ReceberAsync(new ComandoValidacao(arquivo, "a.txt", "org", "u", "c", CanalExecucao.Rest), Cancelamento);
 
-        await cenario.Handler.FalharEmAndamentoAsync(Cancelamento);
+        await cenario.Handler.FalharEmAndamentoAsync(null, Cancelamento);
 
         var execucao = cenario.Repositorio.Itens[recebida.Id];
         Assert.Equal(EstadoExecucao.Falha, execucao.Estado);

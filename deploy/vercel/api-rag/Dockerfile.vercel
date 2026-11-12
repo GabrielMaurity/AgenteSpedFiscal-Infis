@@ -1,0 +1,15 @@
+# Publicação da Api.Rag no Vercel (Container Runtime, beta). Contexto de build: raiz do repositório.
+# O script deploy/vercel/publicar.ps1 copia este arquivo para a raiz como Dockerfile.vercel antes do deploy.
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+COPY Directory.Build.props Directory.Packages.props .editorconfig ./
+COPY src/ src/
+RUN dotnet publish src/Api.Rag/Api.Rag.Endpoints/Api.Rag.Endpoints.csproj -c Release -o /app/publish /p:UseAppHost=false
+
+# Imagem com shell (não chiseled) para ler a PORT definida pela plataforma.
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+ENV ASPNETCORE_ENVIRONMENT=Production
+USER $APP_UID
+CMD ["sh", "-c", "export ASPNETCORE_URLS=\"http://0.0.0.0:${PORT:-8080}\"; exec dotnet Api.Rag.Endpoints.dll"]

@@ -23,6 +23,9 @@ public sealed class FabricaApiRag : WebApplicationFactory<Program>
 
     public IReadOnlyDictionary<string, string?> Configuracao { get; init; } = ConfiguracaoPadrao();
 
+    /// <summary>Ambiente do host; Development só nos testes do modo sem autenticação.</summary>
+    public string Ambiente { get; init; } = "Testing";
+
     /// <summary>Substitui o gerador da OpenAI; os testes nunca chamam a API real.</summary>
     public IGeradorEmbeddings? Embeddings { get; init; }
 
@@ -88,7 +91,7 @@ public sealed class FabricaApiRag : WebApplicationFactory<Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseEnvironment("Testing");
+        builder.UseEnvironment(Ambiente);
 
         foreach (var (chave, valor) in Configuracao)
         {

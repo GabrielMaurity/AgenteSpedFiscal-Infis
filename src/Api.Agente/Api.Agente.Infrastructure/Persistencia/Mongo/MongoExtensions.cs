@@ -1,3 +1,4 @@
+using Api.Agente.Application.Conversas;
 using Api.Agente.Application.Execucoes;
 using Api.Agente.Domain.Execucoes;
 using Api.Agente.Infrastructure.Configuracao;
@@ -47,6 +48,7 @@ public static class MongoExtensions
         services.AddSingleton(provedor => provedor.GetRequiredService<IMongoClient>()
             .GetDatabase(provedor.GetRequiredService<IOptions<MongoDbOpcoes>>().Value.Database));
         services.AddSingleton<IRepositorioExecucoes, RepositorioExecucoes>();
+        services.AddSingleton<IRepositorioConversas, RepositorioConversas>();
         return services;
     }
 
@@ -62,6 +64,7 @@ public static class MongoExtensions
                     new CreateIndexOptions { ExpireAfter = TimeSpan.Zero }),
             ],
             cancelamento);
+        await RepositorioConversas.CriarIndicesAsync(banco, cancelamento);
     }
 }
 
@@ -93,12 +96,11 @@ public sealed class RepositorioExecucoes(IMongoDatabase banco, TimeProvider relo
         return estados.ConvertAll(Execucao.Restaurar);
     }
 
-    public async Task<IReadOnlyList<Execucao>> ListarEmAndamentoAsync(CancellationToken cancelamento)
+    public async Task<IReadOnlyList<Execucao>> ListarEmAndamentoAsync(DateTimeOffset? atualizadasAntesDe, CancellationToken cancelamento)
     {
-        var estados = await _colecao.Find(e =>
-                e.Estado != EstadoExecucao.Concluida
-                && e.Estado != EstadoExecucao.ConcluidaComLimitacoes
-                && e.Estado != EstadoExecucao.Falha)
+        var filtro = Builders<ExecucaoEstado>.Filter;
+        var emAndamento = filtro.Nin(e => e.Estado, [EstadoExecucao.Concluida, EstadoExecucao.ConcluidaComLimitacoes, EstadoExecucao.Falha]);
+        var estados = await _colecao.Find(atualizadasAntesDe is { } limite ? emAndamento & filtro.Lt(e => e.AtualizadoEm, limite) : emAndamento)
             .ToListAsync(cancelamento);
         return estados.ConvertAll(Execucao.Restaurar);
     }

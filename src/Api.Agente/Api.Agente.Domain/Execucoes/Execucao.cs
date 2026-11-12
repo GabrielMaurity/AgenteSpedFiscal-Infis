@@ -1,4 +1,5 @@
 using Api.Agente.Domain.Achados;
+using Api.Agente.Domain.Analise;
 
 namespace Api.Agente.Domain.Execucoes;
 
@@ -65,7 +66,8 @@ public sealed record ExecucaoEstado(
     DateTimeOffset CriadoEm,
     DateTimeOffset AtualizadoEm,
     DateTimeOffset ExpiraEm,
-    List<ValidacaoNaoRealizada>? ForaDoAlcance = null);
+    List<ValidacaoNaoRealizada>? ForaDoAlcance = null,
+    AnaliseIa? AnaliseIa = null);
 
 /// <summary>Processamento de um arquivo, com as nove etapas da constitution P-05.</summary>
 public sealed class Execucao
@@ -121,6 +123,9 @@ public sealed class Execucao
     public IReadOnlyDictionary<string, long> TotaisPorRegra => _estado.TotaisPorRegra;
     public string? MotivoFalha { get; private set; }
 
+    /// <summary>Resultado das etapas 5 a 8, separado dos achados determinísticos (FR-047).</summary>
+    public AnaliseIa? AnaliseIa { get; private set; }
+
     public bool EstaFinalizada => Estado is EstadoExecucao.Concluida or EstadoExecucao.ConcluidaComLimitacoes or EstadoExecucao.Falha;
 
     /// <summary>Revisão humana conforme FR-046. Uma execução com falha também exige revisão.</summary>
@@ -157,6 +162,7 @@ public sealed class Execucao
             MotivoFalha = estado.MotivoFalha,
             Arquivo = estado.Arquivo,
             Identificacao = estado.Identificacao,
+            AnaliseIa = estado.AnaliseIa,
         };
 
     public ExecucaoEstado Exportar(DateTimeOffset agora) =>
@@ -166,6 +172,7 @@ public sealed class Execucao
             MotivoFalha = MotivoFalha,
             Arquivo = Arquivo,
             Identificacao = Identificacao,
+            AnaliseIa = AnaliseIa,
             AtualizadoEm = agora,
         };
 
@@ -249,6 +256,39 @@ public sealed class Execucao
     {
         GarantirNaoFinalizada();
         _estado.ValidacoesNaoRealizadas.Add(validacao);
+    }
+
+    /// <summary>
+    /// Registra a análise da IA. Os indícios aceitos entram como achados <c>indicio_ia</c> de origem IA,
+    /// ao lado dos determinísticos e sem alterá-los (FR-047, research R-10).
+    /// </summary>
+    public void RegistrarAnaliseIa(AnaliseIa analise)
+    {
+        ArgumentNullException.ThrowIfNull(analise);
+        GarantirNaoFinalizada();
+        if (AnaliseIa is not null)
+        {
+            throw new InvalidOperationException("A análise da IA já foi registrada nesta execução.");
+        }
+
+        AnaliseIa = analise;
+        if (analise.Status != StatusAnaliseIa.Aceita || analise.Conteudo is null)
+        {
+            return;
+        }
+
+        var numero = 0;
+        foreach (var indicio in analise.Conteudo.Indicios)
+        {
+            numero++;
+            _estado.Achados.Add(new Achado(
+                $"IA-{numero:D3}",
+                Categoria.IndicioIa,
+                indicio.Severidade,
+                Origem.Ia,
+                indicio.Descricao,
+                registro: indicio.Registro));
+        }
     }
 
     /// <summary>Encerra a execução. Só fica concluída sem pendências e com a análise da IA aceita (P-04).</summary>

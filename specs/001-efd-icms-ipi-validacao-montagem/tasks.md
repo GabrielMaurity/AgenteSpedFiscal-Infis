@@ -284,6 +284,12 @@ determinísticos de validação semântica com LLM falso.
 
 ---
 
+### Ajustes da US3 a pedido do usuário (2026-11-10)
+
+- [X] T121 [US3] Acrescentar `proximidade` (0 a 1) à resposta de `POST /api/v1/conversas/{conversaId}/mensagens` e ao histórico, a partir da nova `similaridade` por trecho de `buscar_trechos` (cosseno no pgvector), com testes em `tests/Api.Agente.Integration.Tests/Conversas/ConversasTests.cs` e `tests/Api.Rag.Tests/Persistencia/BuscaHibridaSimilaridadeTests.cs`; limitar a limitação de arquivo descartado a conversas vinculadas a execução (research R-38)
+
+---
+
 ## Phase 7: Polish & Cross-Cutting Concerns
 
 - [ ] T107 [P] Criar um gerador de arquivos EFD sintéticos grandes em `tools/gerar-efd-sintetico/` e medir 50 MB (≤ 2 min) e 500 MB (≤ 15 min) com uso de memória, registrando em `specs/001-efd-icms-ipi-validacao-montagem/evidencias/desempenho.md` (SC-005)

@@ -82,13 +82,16 @@ public sealed record DocumentoResumo(Guid Id, string Titulo, string Versao, stri
 
 public sealed record LocalizacaoTrecho(string? Capitulo, string? Secao, string? Registro, int? PaginaInicio, int? PaginaFim);
 
+/// <param name="Pontuacao">Nota da fusão RRF, só para ordenar.</param>
+/// <param name="Similaridade">Cosseno entre consulta e trecho, de 0 a 1; nulo em obter_trecho (research R-38).</param>
 public sealed record TrechoRecuperado(
     Guid TrechoId,
     string Texto,
     Classificacao Classificacao,
     DocumentoResumo Documento,
     LocalizacaoTrecho Localizacao,
-    double Pontuacao);
+    double Pontuacao,
+    double? Similaridade = null);
 
 public sealed record BuscarTrechosResponse(string VersaoContrato, IReadOnlyList<TrechoRecuperado> Trechos, bool SemResultados);
 

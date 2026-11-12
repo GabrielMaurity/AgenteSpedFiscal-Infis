@@ -1,0 +1,9 @@
+{
+  "descricao": "(e) Respostas só em material interno ou misturando oficial e interno (research R-27). Usa o tests/fixtures/base/faq-interno.md ingerido com classificacao = interno.",
+  "itens": [
+    { "id": "int-prazo", "pergunta": "Até que dia a equipe precisa terminar a conferência interna da EFD?", "periodo": "2026-01", "criterios": { "classificacoes": ["interno"], "fundamentadaEmFonteOficial": false, "contemLimitacao": "Sem fundamento em fonte oficial recuperada." } },
+    { "id": "int-retificacao", "pergunta": "Quem aprova a retificação da EFD antes do envio?", "periodo": "2026-01", "criterios": { "classificacoes": ["interno"], "fundamentadaEmFonteOficial": false, "contemLimitacao": "Sem fundamento em fonte oficial recuperada." } },
+    { "id": "int-recibo", "pergunta": "Onde guardar o recibo de entrega da EFD?", "periodo": "2026-01", "criterios": { "classificacoes": ["interno"], "fundamentadaEmFonteOficial": false } },
+    { "id": "mista-retificacao", "pergunta": "Como funciona a retificação da EFD ICMS/IPI pelo Guia Prático e quem aprova internamente?", "periodo": "2026-01", "criterios": { "classificacoes": ["oficial", "interno"], "fundamentadaEmFonteOficial": true } }
+  ]
+}

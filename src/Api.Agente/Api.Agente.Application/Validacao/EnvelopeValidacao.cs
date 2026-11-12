@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json.Serialization;
 using Api.Agente.Domain.Achados;
+using Api.Agente.Domain.Analise;
 using Api.Agente.Domain.Execucoes;
 
 namespace Api.Agente.Application.Validacao;
@@ -30,6 +31,34 @@ public sealed record AchadoEnvelope(
     string? AcaoCorretiva,
     FonteEnvelope? Fonte);
 
+public sealed record ReferenciaEnvelope(string TrechoId, string Documento, string Versao, string Localizacao, string Classificacao);
+
+public sealed record ExplicacaoEnvelope(string AchadoId, string Texto, string CausaProvavel, string AcaoCorretiva, IReadOnlyList<string> TrechoIds);
+
+public sealed record IndicioEnvelope(
+    string Descricao,
+    string Severidade,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] string? Registro,
+    IReadOnlyList<string> TrechoIds);
+
+/// <summary>Instância de llm-analise.schema.json já validada.</summary>
+public sealed record ConteudoAnaliseEnvelope(
+    string VersaoContrato,
+    string Resumo,
+    IReadOnlyList<ExplicacaoEnvelope> Explicacoes,
+    IReadOnlyList<IndicioEnvelope> Indicios,
+    IReadOnlyList<string> Limitacoes,
+    bool RevisaoHumanaRecomendada);
+
+/// <summary>Conteúdo do LLM validado mais metadados do sistema (P-12). Conteúdo nulo quando a análise falhou.</summary>
+public sealed record AnaliseIaEnvelope(
+    string Status,
+    string Modelo,
+    int Tentativas,
+    ConteudoAnaliseEnvelope? Conteudo,
+    IReadOnlyList<ReferenciaEnvelope> Referencias,
+    bool FundamentadaEmFonteOficial);
+
 /// <summary>Contrato envelope-validacao.schema.json. Todos os campos são preenchidos pelo sistema (P-12).</summary>
 public sealed record EnvelopeValidacao(
     string VersaoContrato,
@@ -47,6 +76,7 @@ public sealed record EnvelopeValidacao(
     IReadOnlyList<ValidacaoNaoRealizadaEnvelope> ForaDoAlcance,
     IReadOnlyList<AchadoEnvelope> Achados,
     IReadOnlyDictionary<string, long> TotaisPorRegra,
+    AnaliseIaEnvelope? AnaliseIa,
     bool RevisaoHumanaNecessaria,
     string AvisoPva)
 {
@@ -90,12 +120,32 @@ public static class EnvelopeMapper
             execucao.ForaDoAlcance.Select(v => new ValidacaoNaoRealizadaEnvelope(v.Referencia, ParaCategoriaNaoRealizada(v.Categoria), v.Motivo)).ToList(),
             achados,
             execucao.TotaisPorRegra,
+            execucao.AnaliseIa is { } analise ? MapearAnalise(analise) : null,
             execucao.RevisaoHumanaNecessaria,
             AvisoPva)
         {
             MotivoFalha = execucao.MotivoFalha,
         };
     }
+
+    public static AnaliseIaEnvelope MapearAnalise(AnaliseIa analise) => new(
+        analise.Status == StatusAnaliseIa.Aceita ? "aceita" : "falha",
+        analise.Modelo,
+        analise.Tentativas,
+        analise.Conteudo is { } c
+            ? new ConteudoAnaliseEnvelope(
+                c.VersaoContrato,
+                c.Resumo,
+                c.Explicacoes.Select(e => new ExplicacaoEnvelope(e.AchadoId, e.Texto, e.CausaProvavel, e.AcaoCorretiva, e.TrechoIds)).ToList(),
+                c.Indicios.Select(i => new IndicioEnvelope(i.Descricao, ParaSeveridade(i.Severidade), i.Registro, i.TrechoIds)).ToList(),
+                c.Limitacoes,
+                c.RevisaoHumanaRecomendada)
+            : null,
+        analise.Referencias.Select(MapearReferencia).ToList(),
+        analise.FundamentadaEmFonteOficial);
+
+    public static ReferenciaEnvelope MapearReferencia(ReferenciaTrecho r) =>
+        new(r.TrechoId, r.Documento, r.Versao, r.Localizacao, r.Classificacao == ClassificacaoFonte.Oficial ? "oficial" : "interno");
 
     public static AchadoEnvelope MapearAchado(Achado a) => new(
         a.Id,

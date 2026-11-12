@@ -23,6 +23,7 @@ public sealed class ProcessadorExecucoes(
     ValidarArquivoHandler handler,
     ArmazenamentoTemporario armazenamento,
     IOptions<LimitesOpcoes> limites,
+    IOptions<RecuperacaoOpcoes> recuperacao,
     ILogger<ProcessadorExecucoes> logger) : BackgroundService
 {
     private static readonly TimeSpan IntervaloTentativas = TimeSpan.FromSeconds(5);
@@ -31,9 +32,32 @@ public sealed class ProcessadorExecucoes(
     {
         await RecuperarInterrompidasAsync(stoppingToken);
 
-        var consumidores = Enumerable.Range(0, limites.Value.ProcessamentosParalelos)
-            .Select(_ => ConsumirAsync(stoppingToken));
-        await Task.WhenAll(consumidores);
+        var tarefas = Enumerable.Range(0, limites.Value.ProcessamentosParalelos)
+            .Select(_ => ConsumirAsync(stoppingToken))
+            .ToList();
+        if (!recuperacao.Value.InstanciaUnica)
+        {
+            tarefas.Add(VarrerAsync(stoppingToken));
+        }
+
+        await Task.WhenAll(tarefas);
+    }
+
+    /// <summary>Com várias instâncias, encerra periodicamente as execuções de instâncias que pararam.</summary>
+    private async Task VarrerAsync(CancellationToken cancelamento)
+    {
+        using var intervalo = new PeriodicTimer(TimeSpan.FromMinutes(recuperacao.Value.IntervaloVarreduraMinutos));
+        while (await intervalo.WaitForNextTickAsync(cancelamento))
+        {
+            try
+            {
+                await handler.FalharEmAndamentoAsync(recuperacao.Value.Limiar, cancelamento);
+            }
+            catch (Exception excecao) when (excecao is not OperationCanceledException)
+            {
+                logger.LogWarning(excecao, "Falha na varredura de execuções interrompidas.");
+            }
+        }
     }
 
     private async Task RecuperarInterrompidasAsync(CancellationToken cancelamento)
@@ -43,7 +67,7 @@ public sealed class ProcessadorExecucoes(
             try
             {
                 armazenamento.LimparDiretorio();
-                await handler.FalharEmAndamentoAsync(cancelamento);
+                await handler.FalharEmAndamentoAsync(recuperacao.Value.Limiar, cancelamento);
                 return;
             }
             catch (Exception excecao) when (excecao is not OperationCanceledException)

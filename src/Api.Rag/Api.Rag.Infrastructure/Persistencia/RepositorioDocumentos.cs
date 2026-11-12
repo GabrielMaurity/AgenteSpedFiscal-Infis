@@ -194,9 +194,10 @@ public sealed class RepositorioDocumentos(RagDbContext banco) : IRepositorioDocu
     public Task<int> ContarTrechosAsync(Guid documentoId, CancellationToken cancelamento) =>
         banco.Trechos.CountAsync(t => t.DocumentoId == documentoId, cancelamento);
 
-    public async Task<IReadOnlyList<Guid>> ListarPendentesAsync(CancellationToken cancelamento) =>
+    public async Task<IReadOnlyList<Guid>> ListarPendentesAsync(DateTimeOffset? ingeridosAntesDe, CancellationToken cancelamento) =>
         await banco.Documentos.AsNoTracking()
             .Where(d => d.Status == Estados.Recebido || d.Status == Estados.Processando)
+            .Where(d => ingeridosAntesDe == null || d.IngeridoEm < ingeridosAntesDe)
             .OrderBy(d => d.IngeridoEm)
             .Select(d => d.Id)
             .ToListAsync(cancelamento);

@@ -1,0 +1,9 @@
+{
+  "descricao": "(d) Perguntas sem resposta na base. Esperado: fundamentada = false e limitação declarada (FR-052).",
+  "itens": [
+    { "id": "sem-ecf", "pergunta": "Quais são as regras de preenchimento do registro Y540 da ECF?", "periodo": "2026-01", "criterios": { "fundamentada": false, "comLimitacao": true } },
+    { "id": "sem-irpj", "pergunta": "Qual é a alíquota do IRPJ para empresas do lucro presumido?", "periodo": "2026-01", "criterios": { "fundamentada": false, "comLimitacao": true } },
+    { "id": "sem-efd-contrib", "pergunta": "Como preencher o registro M200 da EFD-Contribuições?", "periodo": "2026-01", "criterios": { "fundamentada": false, "comLimitacao": true } },
+    { "id": "sem-esocial", "pergunta": "Qual evento do eSocial informa a admissão de empregado?", "periodo": "2026-01", "criterios": { "fundamentada": false, "comLimitacao": true } }
+  ]
+}
