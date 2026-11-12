@@ -5,11 +5,12 @@
 .DESCRIPTION
   Projetos separados mantêm as variáveis de ambiente isoladas: cada API recebe só a própria connection
   string (constitution P-07). O Vercel usa o Dockerfile.vercel da raiz; o script copia o da API escolhida,
-  publica e remove a cópia. Não grava segredos: token e IDs vêm de variáveis de ambiente.
+  publica e remove a cópia. Não grava segredos.
 
-  Requer: Vercel CLI (npm i -g vercel), VERCEL_TOKEN, VERCEL_ORG_ID e o ID do projeto da API em
-  VERCEL_PROJECT_ID_AGENTE ou VERCEL_PROJECT_ID_RAG. As variáveis da aplicação ficam no painel do projeto
-  (ver deploy/vercel/variaveis-*.md).
+  Autenticação: a sessão do `vercel login` ou, em CI, a variável VERCEL_TOKEN. Os IDs do time e dos
+  projetos (não são segredos) têm padrão abaixo e podem ser trocados por VERCEL_ORG_ID e
+  VERCEL_PROJECT_ID_AGENTE / VERCEL_PROJECT_ID_RAG. As variáveis da aplicação ficam no projeto
+  (ver deploy/vercel/variaveis.md).
 
 .EXAMPLE
   ./deploy/vercel/publicar.ps1 -Api agente            # preview
@@ -25,17 +26,24 @@ $raiz = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $origem = Join-Path $PSScriptRoot "api-$Api\Dockerfile.vercel"
 $destino = Join-Path $raiz 'Dockerfile.vercel'
 
-foreach ($variavel in 'VERCEL_TOKEN', 'VERCEL_ORG_ID') {
-    if (-not [Environment]::GetEnvironmentVariable($variavel)) { throw "Defina $variavel." }
+# Time CSC e projetos criados em 2026-11-12 (feature 002, T015).
+$padroes = @{
+    ORG    = 'team_yT5T81wFidgowV7KFyUbxeyi'
+    RAG    = 'prj_T0asZ2gAnfmFphWK6nswbKFgoP1P'
+    AGENTE = 'prj_9cBzm04r97yk1y8l0dNvZQ1whFmB'
 }
-$projeto = [Environment]::GetEnvironmentVariable("VERCEL_PROJECT_ID_$($Api.ToUpperInvariant())")
-if (-not $projeto) { throw "Defina VERCEL_PROJECT_ID_$($Api.ToUpperInvariant())." }
+$org = if ($env:VERCEL_ORG_ID) { $env:VERCEL_ORG_ID } else { $padroes.ORG }
+$chave = $Api.ToUpperInvariant()
+$projeto = [Environment]::GetEnvironmentVariable("VERCEL_PROJECT_ID_$chave")
+if (-not $projeto) { $projeto = $padroes[$chave] }
 if (Test-Path $destino) { throw "Já existe Dockerfile.vercel na raiz; remova-o antes de publicar." }
 
 Copy-Item $origem $destino
 try {
+    $env:VERCEL_ORG_ID = $org
     $env:VERCEL_PROJECT_ID = $projeto
-    $argumentos = @('deploy', '--yes', '--token', $env:VERCEL_TOKEN)
+    $argumentos = @('deploy', '--yes')
+    if ($env:VERCEL_TOKEN) { $argumentos += @('--token', $env:VERCEL_TOKEN) }
     if ($Producao) { $argumentos += '--prod' }
     Push-Location $raiz
     try { & vercel @argumentos; if ($LASTEXITCODE -ne 0) { throw "vercel deploy terminou com código $LASTEXITCODE." } }
