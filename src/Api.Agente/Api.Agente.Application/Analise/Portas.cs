@@ -45,11 +45,18 @@ public sealed class ContextoRecuperacao
 
     public IReadOnlyCollection<TrechoBase> Trechos => [.. _trechos.Values];
 
+    /// <summary>
+    /// Guarda os trechos. A primeira similaridade conhecida de cada trecho é preservada: ela vem da busca com a
+    /// pergunta do usuário, e obter_trecho (sem consulta) ou outra busca da ferramenta não a substituem (R-38).
+    /// </summary>
     public void Registrar(IEnumerable<TrechoBase> trechos)
     {
         foreach (var trecho in trechos)
         {
-            _trechos[trecho.TrechoId] = trecho;
+            _trechos.AddOrUpdate(
+                trecho.TrechoId,
+                trecho,
+                (_, anterior) => trecho with { Similaridade = anterior.Similaridade ?? trecho.Similaridade });
         }
     }
 
