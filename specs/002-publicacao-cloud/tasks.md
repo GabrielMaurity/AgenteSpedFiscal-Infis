@@ -24,18 +24,30 @@
 
 - [X] T010 [M] Neon Free: criar projeto na região mais próxima do Vercel, executar `deploy/neon/01-bancos-e-roles.sql` pela conexão direta e conferir `vector` só no banco `rag`
 - [X] T011 [M] Neon: criar uma branch de backup, aplicar as migrações das duas APIs rodando-as localmente com `Persistencia__AplicarMigracoesNaInicializacao=true` contra o Neon, e conferir as tabelas e a coluna `vector` com a dimensão do modelo de embeddings
-- [ ] T012 [M] Atlas Free: criar cluster, usuário com `readWrite` só no banco `agente` e regra de acesso de rede; abrir `0.0.0.0/0` só com aprovação registrada em `docs/desvios/` (FR-P08)
-- [ ] T013 [M] Atlas: teste de escrita e leitura com a connection string e conferência do índice TTL de `execucoes` e `conversas` após a primeira inicialização
-- [ ] T014 [M] Ingerir o Guia 3.2.4 e o `faq-interno.md` rodando a Api.Rag localmente contra o Neon (FR-P05) e registrar a contagem de trechos
+- [X] T012 [M] Atlas Free: criar cluster, usuário com `readWrite` só no banco `agente` e regra de acesso de rede; abrir `0.0.0.0/0` só com aprovação registrada em `docs/desvios/` (FR-P08)
+- [X] T013 [M] Atlas: teste de escrita e leitura com a connection string e conferência do índice TTL de `execucoes` e `conversas` após a primeira inicialização
+- [X] T014 [M] Ingerir o Guia 3.2.4 e o `faq-interno.md` rodando a Api.Rag localmente contra o Neon (FR-P05) e registrar a contagem de trechos
 
 **Neon (2026-11-10)**: projeto `quiet-base-69847026`, branch `production`, região AWS us-east-1, vinculado com `neon init`/`neon deploy` (CLI 9.3.2). `01-bancos-e-roles.sql` executado pela conexão direta; `vector` 0.8.6 no `rag`. Migrações aplicadas pela conexão direta rodando as APIs localmente (rag: 2; agente: 1). Teste de ponta a ponta com a conexão **pooled**: ingestão do `faq-interno.md` (ativo, 4 trechos, `text-embedding-3-small` 1536), conversa com resposta `interno`, `fundamentadaEmFonteOficial = false`, `proximidade` 0,7641; consumo gravado em `consumo_ia` (2 chamadas) e `consumo_embeddings` (3). **Ressalvas**: a branch de backup da T011 não foi criada antes das migrações (banco vazio, sem perda); a senha do `neondb_owner` apareceu numa saída de comando e deve ser trocada no painel; o Guia 3.2.4 ainda não foi ingerido (T014).
 
+**Atlas (2026-11-12)**: cluster `Cluster0` (MongoDB 8.0.37), string `mongodb+srv` em `ATLAS_MONGODB_URI` no `.env` local. T013: ping, escrita, leitura e remoção no banco `agente`; a Api.Agente, rodando localmente contra Atlas e Neon, ficou pronta (`/health/ready` 200), criou os índices de `execucoes` e `conversas` com TTL em `expiraEm` e gravou uma conversa (`201`). **T012 concluída (2026-11-12)**: usuário de banco só com `readWrite@agente` (teste de gravação fora do banco `agente` negado com `AtlasError`); regra de rede `0.0.0.0/0` criada pelo responsável, conforme [docs/desvios/0001-atlas-acesso-de-rede-aberto.md](../../docs/desvios/0001-atlas-acesso-de-rede-aberto.md) (revisão até 2027-02-12). O acesso a partir do Vercel será confirmado na publicação (T017).
+
+**T014 (2026-11-12)**: Guia Prático EFD ICMS/IPI 3.2.4 (PDF de 6,5 MB, 366 páginas) ingerido pela Api.Rag local contra o Neon pooled: `ativo`, oficial, **723 trechos**, `text-embedding-3-small` (1536), em cerca de 40 s. Título corrigido no banco (acento perdido no envio pelo `curl`). Busca MCP de "O valor de IBS e CBS entra no VL_DOC do C100 em 2026?" com `periodo=2026-03` trouxe Cap. I, Seção 10 (similaridade 0,5715) e trechos do C100. Base no Neon: Guia (oficial, 723) e FAQ interno (4).
+
 ## Phase 4: Publicação
 
-- [ ] T015 [M] Criar os projetos `agente-sped-fiscal-api-rag` e `agente-sped-fiscal-api-agente` no Vercel **sem** integração automática com o Git e preencher as variáveis de [variaveis.md](../../deploy/vercel/variaveis.md)
-- [ ] T016 [M] Publicar a Api.Rag (`publicar.ps1 -Api rag`), conferir `/health/ready` e `buscar_trechos` por MCP com o token de serviço
-- [ ] T017 [M] Publicar a Api.Agente (`publicar.ps1 -Api agente`), conferir `/health/ready`, o Agent Card e `McpRag__Url` apontando para a Api.Rag publicada
-- [ ] T018 [M] Medir: validação de `valido-perfil-a.txt` e de `unidade-sem-0190.txt` por REST e por A2A; tempo até o status final, cold start e se o processamento continua após o `202`
+- [X] T015 [M] Criar os projetos `agente-sped-fiscal-api-rag` e `agente-sped-fiscal-api-agente` no Vercel **sem** integração automática com o Git e preencher as variáveis de [variaveis.md](../../deploy/vercel/variaveis.md)
+- [X] T016 [M] Publicar a Api.Rag (`publicar.ps1 -Api rag`), conferir `/health/ready` e `buscar_trechos` por MCP com o token de serviço
+- [X] T017 [M] Publicar a Api.Agente (`publicar.ps1 -Api agente`), conferir `/health/ready`, o Agent Card e `McpRag__Url` apontando para a Api.Rag publicada
+- [X] T018 [M] Medir: validação de `valido-perfil-a.txt` e de `unidade-sem-0190.txt` por REST e por A2A; tempo até o status final, cold start e se o processamento continua após o `202`
+
+**Publicação (2026-11-12)**: projetos `agente-sped-fiscal-api-rag` (`prj_T0asZ2gAnfmFphWK6nswbKFgoP1P`) e `agente-sped-fiscal-api-agente` (`prj_9cBzm04r97yk1y8l0dNvZQ1whFmB`) no time CSC (Hobby), região iad1, Fluid compute, sem Git. Ajustes necessários: framework `container` (com o preset "Other" o Vercel publicou estático, 404 em tudo) e proteção trocada de `all_except_custom_domains` para Standard (`prod_deployment_urls_and_all_previews`), senão o domínio de produção exigia login do Vercel. 11 variáveis na Api.Rag e 17 na Api.Agente, só em Production, segredos como *Sensitive*, enviadas pela CLI a partir do `.env` (chave JWT nova, emissor `agente-sped-fiscal-vercel`, tokens de serviço e de teste). `publicar.ps1` passou a usar a sessão do `vercel login`.
+
+Evidências nas URLs públicas: health live/ready 200 nas duas APIs (Neon e Atlas acessíveis; confirma a regra do desvio 0001); Swagger e endpoints sem token 401; Api.Rag: documentos 200 com token admin e 403 sem `admin_base`, `buscar_trechos` por MCP 200 com token de serviço e 401 com token inválido; Api.Agente: Agent Card 200 com as duas skills e URL `https`, conversa "O valor de IBS entra no VL_DOC do C100 em 2026?" fundamentada em fonte oficial (Cap. I, Seção 10) em 6–10 s, `proximidade` 0,5372; validação de `valido-perfil-a.txt` e `unidade-sem-0190.txt` por REST: `202` em menos de 0,5 s e status final em 7–11 s, com análise da IA aceita — **o processamento após o `202` funciona no Vercel**. `EFD-NEG-003` aparece como não realizada porque a tabela de NCM ainda não foi importada no Neon.
+
+**Correção encontrada em produção**: a `proximidade` vinha 0 quando o modelo relia um trecho por `obter_trecho` (sem consulta), que sobrescrevia a similaridade. `ContextoRecuperacao.Registrar` passou a preservar a primeira similaridade conhecida; testes em `ContextoRecuperacaoTests`.
+
+**Pendências**: logs da aplicação não aparecem nos Runtime Logs do Vercel (só há exportação OTLP); importar a tabela de NCM no Neon; T019 a T021.
 
 ## Phase 5: Aceite
 
